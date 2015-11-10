@@ -1,0 +1,124 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import subprocess
+from shutil import copyfile
+class BatchEncoder(object):
+    QUEUE_FILE="queue.txt"
+    def __init__(self, workdir,outdir):
+        self.workdir = workdir
+        self.queue_file="%s/%s" % (self.workdir,self.QUEUE_FILE)
+        self.outdir = outdir
+        self._sanity_check_dirs()
+        self._backup_queue_file()
+        self._process_queue_file()
+    
+    def wait(self):
+        print "Running all encoders."
+        for encoder,line in self.encoders:
+            encoder.run()
+            encoder.wait()
+            self._delete_line_from_queue(line)
+    
+    def _sanity_check_dirs(self):
+        if not os.path.isdir(self.workdir):
+            raise Exception("Working directory not found: %s" % self.workdir)
+        
+        if not os.path.isdir(self.outdir):
+            raise Exception("Output directory not found: %s" % self.outdir)
+        
+        if not os.path.exists("%s" % self.queue_file):
+            raise Exception("Can't find queue file: %s" % queue_file)
+        
+        
+    def _process_queue_file(self):
+        self.encoders=[]
+        for line in open(self.queue_file).readlines():
+            line=line.rstrip()
+            (input_file,output_title)=line.split(',',1)
+            encoder=SingleEncoder(self.workdir,self.outdir,input_file,output_title)
+            self.encoders.append((encoder,line))
+
+    def _backup_queue_file(self):
+        queue_file_backup="%s.orig" % self.queue_file
+        copyfile(self.queue_file,queue_file_backup)
+    
+    def _delete_line_from_queue(self,line):
+        output=[]
+        for queue_line in open(self.queue_file,"rb"):
+            if line != queue_line.rstrip():
+                output.append(queue_line)
+        
+        queue_out=open(self.queue_file,"wb")
+        for outline in output:
+            queue_out.write(outline)
+        queue_out.close()
+        
+    
+class SingleEncoder(object):
+    TRANSCODE="transcode-video"
+    def __init__(self, workdir,outdir,input_file,output_title):
+        self.outdir = outdir
+        self.input_file=input_file
+        #self.fq_input_file="%s/%s" % (workdir,input_file)
+        self.crops_dir="%s/%s" %(workdir,"Crops")
+        self.output_title = output_title
+        self.outlog="%s.log" % self.input_file
+        self.fq_output_file="%s/%s.m4v" % (self.outdir,self.output_title)
+        self._sanity_check_dirs()
+        self.command=self._build_command()
+
+    def run(self):
+        print "Running:"
+        print self.command
+        self.outlog_file=open(self.outlog,"wb")
+        self.process=subprocess.Popen(self.command,stdout=self.outlog_file,stderr=self.outlog_file)
+    
+    def wait(self):
+        print "Waiting for encode job of %s to complete." % self.input_file
+        self.process.wait()
+        print "Done."
+    
+    def _sanity_check_dirs(self):
+        if not os.path.exists(self.input_file):
+            raise Exception("Input file not found: %s" % self.input_file)
+        
+        if not os.path.isdir(self.outdir):
+            raise Exception("Output directory not found: %s" % self.outdir)
+    
+    def _build_command(self):
+        crop_option=self._get_crop_option()
+        command=[self.TRANSCODE]
+        if crop_option:
+            for opt in crop_option:
+                command.append(opt)
+        command.append("--m4v")
+        command.append(self.input_file)
+        command.append("--output")
+        command.append(self.fq_output_file)
+        return command
+        
+    
+    def _get_crop_option(self):
+        crop_file="%s/%s_crop.txt" % (self.crops_dir,self.input_file)
+        
+        try:
+            crop_val=open(crop_file,"rb").readline()
+            crop_opt=["--crop",crop_val]
+        except:
+            crop_opt=None
+        
+        return crop_opt
+
+def main():
+    workdir=sys.argv[1]
+    outdir=sys.argv[2]
+    print "Creating batch encoder."
+    encoder=BatchEncoder(workdir,outdir)
+    print "Waiting for encoder to finish."
+    encoder.wait()
+    print "Batch encoder done."
+
+if __name__ == '__main__':
+    main()
