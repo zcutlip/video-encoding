@@ -89,18 +89,32 @@ class SingleEncoder(object):
     
     def _build_command(self):
         crop_option=self._get_crop_option()
+        subtitle_option=self._get_sub_option()
         command=[self.TRANSCODE]
         if crop_option:
             for opt in crop_option:
                 command.append(opt)
+        if subtitle_option:
+            for opt in subtitle_option:
+                command.append(opt)
+        
         command.append("--m4v")
         command.append(self.input_file)
         command.append("--output")
         command.append(self.fq_output_file)
         return command
         
-    
+    def _get_sub_option(self):
+        """
+        Build option list for burning subtitles.
+        Eventually this will be configurable at run-time and may return None.
+        """
+        sub_opt=["--burn-subtitle","scan"]
+        
+        return crop_opt
+        
     def _get_crop_option(self):
+        """build option list for cropping video."""
         crop_file="%s/%s_crop.txt" % (self.crops_dir,self.input_file)
         
         try:
