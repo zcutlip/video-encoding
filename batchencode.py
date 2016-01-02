@@ -111,7 +111,7 @@ class SingleEncoder(object):
         """
         sub_opt=["--burn-subtitle","scan"]
         
-        return crop_opt
+        return sub_opt
         
     def _get_crop_option(self):
         """build option list for cropping video."""
