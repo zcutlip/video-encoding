@@ -61,6 +61,7 @@ class SingleEncoder(object):
     def __init__(self, workdir,outdir,input_file,output_title):
         self.outdir = outdir
         self.input_file=input_file
+        self.input_file_basename=os.path.basename(self.input_file)
         #self.fq_input_file="%s/%s" % (workdir,input_file)
         self.crops_dir="%s/%s" %(workdir,"Crops")
         self.output_title = output_title
@@ -72,8 +73,8 @@ class SingleEncoder(object):
     def run(self):
         print "Running:"
         print self.command
-        self.outlog_file=open(self.outlog,"wb")
-        self.process=subprocess.Popen(self.command,stdout=self.outlog_file,stderr=self.outlog_file)
+        self.outlog_file=open(self.outlog,"wb",0)
+        self.process=subprocess.Popen(self.command,stdout=self.outlog_file,stderr=self.outlog_file,bufsize=0)
     
     def wait(self):
         print "Waiting for encode job of %s to complete." % self.input_file
@@ -115,13 +116,14 @@ class SingleEncoder(object):
         
     def _get_crop_option(self):
         """build option list for cropping video."""
-        crop_file="%s/%s_crop.txt" % (self.crops_dir,self.input_file)
+        crop_file="%s/%s_crop.txt" % (self.crops_dir,self.input_file_basename)
         
         try:
             crop_val=open(crop_file,"rb").readline()
             crop_opt=["--crop",crop_val]
-        except:
-            crop_opt=None
+        except Exception as e:
+            print e
+            crop_opt=["--crop","detect"]
         
         return crop_opt
 
