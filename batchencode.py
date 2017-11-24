@@ -119,7 +119,7 @@ class SingleEncoder(object):
         crop_file="%s/%s_crop.txt" % (self.crops_dir,self.input_file_basename)
         
         try:
-            crop_val=open(crop_file,"rb").readline()
+            crop_val=open(crop_file,"rb").readline().strip()
             crop_opt=["--crop",crop_val]
         except Exception as e:
             print e
