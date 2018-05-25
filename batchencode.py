@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 
+import argparse
+import glob
 import os
 import subprocess
 import sys
 from shutil import copyfile
+
+def parse_args(argv):
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--workdir",help="Directory containing video files to encode.")
+    parser.add_argument("--outdir",help="Directory to write encoded files to.")
+    parser.add_argument("--decomb",help="Optionally have Handbrake decomb video.",action="store_true")
+    args=parser.parse_args(argv)
+    return args
+
 class BatchEncoder(object):
     QUEUE_FILE="queue.txt"
     def __init__(self, workdir,outdir,decomb=False):
@@ -35,9 +46,16 @@ class BatchEncoder(object):
 
     def _process_queue_file(self):
         self.encoders=[]
+        linecount=0
         for line in open(self.queue_file).readlines():
+            linecount+=1
             line=line.rstrip()
-            (input_file,output_title)=line.split(',',1)
+            parts=line.split(',',1)
+            #handle empty or malformed line
+            if not len(parts) == 2:
+                print "Skipping line %d: %s" % (linecount,line)
+                continue
+            (input_file,output_title)=parts
             encoder=SingleEncoder(self.workdir,self.outdir,input_file,output_title,decomb=self.decomb)
             self.encoders.append((encoder,line))
 
@@ -66,6 +84,7 @@ class SingleEncoder(object):
         self.input_file_basename=os.path.basename(self.input_file)
         #self.fq_input_file="%s/%s" % (workdir,input_file)
         self.crops_dir="%s/%s" %(workdir,"Crops")
+        self.subtitles_dir="%s/%s" % (workdir,"subtitles")
         self.output_title = output_title
         self.outlog="%s.log" % self.input_file
         self.fq_output_file="%s/%s.m4v" % (self.outdir,self.output_title)
@@ -110,6 +129,21 @@ class SingleEncoder(object):
         command.append(self.fq_output_file)
         return command
 
+    def _get_sub_lang(self,srt_file_name):
+        lang=""
+        if not srt_file_name.endswith(".srt"):
+            return lang
+        # "subs/mymovie.eng.srt"
+        srt_basename=os.path.basename(srt_file_name)
+        # "mymovie.eng.srt"
+        srt_basename=os.path.splitext(srt_basename)[0]
+        # "mymovie.eng"
+        lang=os.path.splitext(srt_basename)[1]
+        # ".eng"
+        lang=lang.lstrip(".")
+        # "eng"
+        return lang
+
     def _get_sub_option(self):
         """
         Build option list for burning subtitles.
@@ -117,7 +151,16 @@ class SingleEncoder(object):
         """
         sub_opt=["--burn-subtitle","scan"]
 
+        subtitle_glob="%s/%s.*.srt" % (self.subtitles_dir,os.path.splitext(self.input_file_basename)[0])
+        
+        matching_srt_files=glob.glob(subtitle_glob)
+        for srt_file in matching_srt_files:
+            lang=self._get_sub_lang(srt_file)
+            sub_opt+=["--add-srt",srt_file]
+            sub_opt+=["--bind-srt-language",lang]
+        
         return sub_opt
+
 
     def _get_crop_option(self):
         """build option list for cropping video."""
@@ -142,11 +185,13 @@ class SingleEncoder(object):
 
 
 def main():
-    decomb=False
-    workdir=sys.argv[1]
-    outdir=sys.argv[2]
-    if len(sys.argv)>3 and sys.argv[3] == "decomb":
-        decomb=True
+    args=parse_args(sys.argv[1:])
+
+    decomb=args.decomb
+    workdir=args.workdir
+    outdir=args.outdir
+    
+
 
     print "Creating batch encoder."
     encoder=BatchEncoder(workdir,outdir,decomb=decomb)
