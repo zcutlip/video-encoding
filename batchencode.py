@@ -3,8 +3,10 @@
 import argparse
 import glob
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from shutil import copyfile
 
 def parse_args(argv):
@@ -22,6 +24,7 @@ class BatchEncoder(object):
         self.workdir = workdir
         self.queue_file="%s/%s" % (self.workdir,self.QUEUE_FILE)
         self.outdir = outdir
+        self.tempdir = tempfile.mkdtemp()
         self._sanity_check_dirs()
         self._backup_queue_file()
         self._process_queue_file()
@@ -77,8 +80,9 @@ class BatchEncoder(object):
 
 class SingleEncoder(object):
     TRANSCODE="transcode-video"
-    def __init__(self, workdir,outdir,input_file,output_title,decomb=False):
+    def __init__(self, workdir,tempdir,outdir,input_file,output_title,decomb=False):
         self.decomb=decomb
+        self.tempdir=tempdir
         self.outdir = outdir
         self.input_file=input_file
         self.input_file_basename=os.path.basename(self.input_file)
@@ -87,6 +91,7 @@ class SingleEncoder(object):
         self.subtitles_dir="%s/%s" % (workdir,"subtitles")
         self.output_title = output_title
         self.outlog="%s.log" % self.input_file
+        self.fq_temp_file="%s/%s.m4v" % (self.tempdir,self.output_title)
         self.fq_output_file="%s/%s.m4v" % (self.outdir,self.output_title)
         self._sanity_check_dirs()
         self.command=self._build_command()
@@ -96,6 +101,8 @@ class SingleEncoder(object):
         print self.command
         self.outlog_file=open(self.outlog,"wb",0)
         self.process=subprocess.Popen(self.command,stdout=self.outlog_file,stderr=self.outlog_file,bufsize=0)
+        print "Moving encoded file to %s" % self.fq_output_file
+        shutil.move(self.fq_temp_file,self.fq_output_file)        
 
     def wait(self):
         print "Waiting for encode job of %s to complete." % self.input_file
@@ -108,6 +115,9 @@ class SingleEncoder(object):
 
         if not os.path.isdir(self.outdir):
             raise Exception("Output directory not found: %s" % self.outdir)
+
+        if not os.path.isdir(self.tempdir):
+            raise Exception("Temp directory not found: %s" % self.tempdir)
 
     def _build_command(self):
         crop_option=self._get_crop_option()
@@ -126,7 +136,7 @@ class SingleEncoder(object):
         command.append("--m4v")
         command.append(self.input_file)
         command.append("--output")
-        command.append(self.fq_output_file)
+        command.append(self.fq_temp_file)
         return command
 
     def _get_sub_lang(self,srt_file_name):
