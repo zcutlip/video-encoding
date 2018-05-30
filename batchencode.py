@@ -59,7 +59,7 @@ class BatchEncoder(object):
                 print "Skipping line %d: %s" % (linecount,line)
                 continue
             (input_file,output_title)=parts
-            encoder=SingleEncoder(self.workdir,self.outdir,input_file,output_title,decomb=self.decomb)
+            encoder=SingleEncoder(self.workdir,self.tempdir, self.outdir,input_file,output_title,decomb=self.decomb)
             self.encoders.append((encoder,line))
 
     def _backup_queue_file(self):
@@ -101,12 +101,15 @@ class SingleEncoder(object):
         print self.command
         self.outlog_file=open(self.outlog,"wb",0)
         self.process=subprocess.Popen(self.command,stdout=self.outlog_file,stderr=self.outlog_file,bufsize=0)
-        print "Moving encoded file to %s" % self.fq_output_file
-        shutil.move(self.fq_temp_file,self.fq_output_file)        
-
-    def wait(self):
+        
+    def _wait(self):
         print "Waiting for encode job of %s to complete." % self.input_file
         self.process.wait()
+
+    def wait(self):
+        self._wait()
+        print "Moving encoded file to %s" % self.fq_output_file
+        shutil.move(self.fq_temp_file,self.fq_output_file)
         print "Done."
 
     def _sanity_check_dirs(self):
