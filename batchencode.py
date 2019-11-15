@@ -193,7 +193,17 @@ class SingleEncoder(object):
         """
         decomb_option=None
         if self.decomb:
-            decomb_option=["--filter","decomb"]
+            # From --help:
+            #    --comb-detect[=string]  Detect interlace artifacts in frames.
+            #       If not accompanied by the decomb or deinterlace
+            #       filters, this filter only logs the interlaced
+            #       frame count to the activity log.
+            #       If accompanied by the decomb or deinterlace
+            #       filters, it causes these filters to selectively
+            #       deinterlace only those frames where interlacing
+            #       is detected.
+            # TODO: maybe enable this combo by default?
+            decomb_option=["--comb-detect","--filter","decomb"]
         return decomb_option
 
 
