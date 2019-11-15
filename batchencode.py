@@ -193,7 +193,7 @@ class SingleEncoder(object):
         """
         decomb_option=None
         if self.decomb:
-            # From --help:
+            # From HandBrakeCLI --help:
             #    --comb-detect[=string]  Detect interlace artifacts in frames.
             #       If not accompanied by the decomb or deinterlace
             #       filters, this filter only logs the interlaced
@@ -202,8 +202,10 @@ class SingleEncoder(object):
             #       filters, it causes these filters to selectively
             #       deinterlace only those frames where interlacing
             #       is detected.
+            # 
+            # -H option to transcode-video specifies option to be passed to handbrake
             # TODO: maybe enable this combo by default?
-            decomb_option=["--comb-detect","--filter","decomb"]
+            decomb_option=["-H","comb-detect","--filter","decomb"]
         return decomb_option
 
 
