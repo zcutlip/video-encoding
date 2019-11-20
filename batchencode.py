@@ -8,12 +8,15 @@ import subprocess
 import sys
 import tempfile
 from shutil import copyfile
+from selfcaffeinate import SelfCaffeinate
 
 def parse_args(argv):
     parser=argparse.ArgumentParser()
     parser.add_argument("--workdir",help="Directory containing video files to encode.")
     parser.add_argument("--outdir",help="Directory to write encoded files to.")
     parser.add_argument("--decomb",help="Optionally have Handbrake decomb video.",action="store_true")
+    parser.add_argument(
+        "--no-sleep", help="Prevent macOS from sleeping while encoding.", action="store_true")
     args=parser.parse_args(argv)
     return args
 
@@ -215,6 +218,10 @@ def main():
     decomb=args.decomb
     workdir=args.workdir
     outdir=args.outdir
+    if args.no_sleep:
+        sc = SelfCaffeinate()
+    else:
+        sc = None
     
 
 
@@ -223,6 +230,7 @@ def main():
     print "Waiting for encoder to finish."
     encoder.wait()
     print "Batch encoder done."
+    sc = None
 
 if __name__ == '__main__':
     main()
