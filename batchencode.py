@@ -104,7 +104,7 @@ class SingleEncoder(object):
         print self.command
         self.outlog_file=open(self.outlog,"wb",0)
         self.process=subprocess.Popen(self.command,stdout=self.outlog_file,stderr=self.outlog_file,bufsize=0)
-        
+
     def _wait(self):
         print "Waiting for encode job of %s to complete." % self.input_file
         self.process.wait()
@@ -168,13 +168,13 @@ class SingleEncoder(object):
         sub_opt=["--burn-subtitle","scan"]
 
         subtitle_glob="%s/%s.*.srt" % (self.subtitles_dir,os.path.splitext(self.input_file_basename)[0])
-        
+
         matching_srt_files=glob.glob(subtitle_glob)
         for srt_file in matching_srt_files:
             lang=self._get_sub_lang(srt_file)
             sub_opt+=["--add-srt",srt_file]
             sub_opt+=["--bind-srt-language",lang]
-        
+
         return sub_opt
 
 
@@ -205,7 +205,7 @@ class SingleEncoder(object):
             #       filters, it causes these filters to selectively
             #       deinterlace only those frames where interlacing
             #       is detected.
-            # 
+            #
             # -H option to transcode-video specifies option to be passed to handbrake
             # TODO: maybe enable this combo by default?
             decomb_option=["-H","comb-detect","--filter","decomb"]
@@ -222,7 +222,7 @@ def main():
         sc = SelfCaffeinate()
     else:
         sc = None
-    
+
 
 
     print "Creating batch encoder."
