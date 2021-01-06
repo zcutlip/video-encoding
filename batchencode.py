@@ -64,7 +64,7 @@ class BatchEncoder(object):
             parts = line.split(',', 1)
             # handle empty or malformed line
             if not len(parts) == 2:
-                print "Skipping line %d: %s" % (linecount, line)
+                print("Skipping line %d: %s" % (linecount, line))
                 continue
             (input_file, output_title) = parts
             encoder = SingleEncoder(
@@ -107,21 +107,21 @@ class SingleEncoder(object):
         self.command = self._build_command()
 
     def run(self):
-        print "Running:"
-        print self.command
+        print("Running:")
+        print(self.command)
         self.outlog_file = open(self.outlog, "wb", 0)
         self.process = subprocess.Popen(
             self.command, stdout=self.outlog_file, stderr=self.outlog_file, bufsize=0)
 
     def _wait(self):
-        print "Waiting for encode job of %s to complete." % self.input_file
+        print("Waiting for encode job of %s to complete." % self.input_file)
         self.process.wait()
 
     def wait(self):
         self._wait()
-        print "Moving encoded file to %s" % self.fq_output_file
+        print("Moving encoded file to %s" % self.fq_output_file)
         shutil.move(self.fq_temp_file, self.fq_output_file)
-        print "Done."
+        print("Done.")
 
     def _sanity_check_dirs(self):
         if not os.path.exists(self.input_file):
@@ -195,7 +195,7 @@ class SingleEncoder(object):
             crop_val = open(crop_file, "rb").readline().strip()
             crop_opt = ["--crop", crop_val]
         except Exception as e:
-            print e
+            print(e)
             crop_opt = ["--crop", "detect"]
 
         return crop_opt
@@ -233,11 +233,11 @@ def main():
     else:
         sc = None
 
-    print "Creating batch encoder."
+    print("Creating batch encoder.")
     encoder = BatchEncoder(workdir, outdir, decomb=decomb)
-    print "Waiting for encoder to finish."
+    print("Waiting for encoder to finish.")
     encoder.wait()
-    print "Batch encoder done."
+    print("Batch encoder done.")
     sc = None
 
 
