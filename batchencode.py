@@ -39,7 +39,7 @@ class BatchEncoder(object):
         self._process_queue_file()
 
     def wait(self):
-        print "Running all encoders."
+        print("Running all encoders.")
         for encoder, line in self.encoders:
             encoder.run()
             encoder.wait()
