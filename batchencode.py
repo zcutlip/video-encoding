@@ -238,7 +238,8 @@ def main():
     print("Waiting for encoder to finish.")
     encoder.wait()
     print("Batch encoder done.")
-    sc = None
+    if sc:
+        sc = None
 
 
 if __name__ == '__main__':
