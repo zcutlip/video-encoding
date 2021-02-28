@@ -1,90 +1,123 @@
 #!/usr/bin/env python3
 
-import argparse
+# import argparse
 import glob
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
-from shutil import copyfile
+import json
 from selfcaffeinate import SelfCaffeinate
-
-
-def parse_args(argv):
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--workdir", help="Directory containing video files to encode.")
-    parser.add_argument(
-        "--outdir", help="Directory to write encoded files to.")
-    parser.add_argument(
-        "--decomb", help="Optionally have Handbrake decomb video.", action="store_true")
-    parser.add_argument(
-        "--no-sleep", help="Prevent macOS from sleeping while encoding.", action="store_true")
-    args = parser.parse_args(argv)
-    return args
+from typing import Dict
+from pathlib import Path
+from config.config import BatchEncoderConfig
 
 
 class BatchEncoder(object):
     QUEUE_FILE = "queue.txt"
+    JOB_QUEUE_FILE = "jobs.json"
 
-    def __init__(self, workdir, outdir, decomb=False):
-        self.decomb = decomb
-        self.workdir = workdir
-        self.queue_file = "%s/%s" % (self.workdir, self.QUEUE_FILE)
-        self.outdir = outdir
+    def __init__(self, config: Dict):
+        self.decomb = config.decomb
+        self.workdir = config.workdir
+        self.outdir = config.outdir
         self.tempdir = tempfile.mkdtemp()
+        self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
+        self.jobs = config.jobs
         self._sanity_check_dirs()
-        self._backup_queue_file()
-        self._process_queue_file()
+        self._create_job_list(self.jobs)
+        self._process_jobs()
 
     def wait(self):
         print("Running all encoders.")
-        for encoder, line in self.encoders:
+        for encoder, input_file in self.encoders:
             encoder.run()
             encoder.wait()
-            self._delete_line_from_queue(line)
+            self._mark_job_complete(input_file)
+        self._clear_completed()
 
     def _sanity_check_dirs(self):
+        if not self.workdir:
+            raise Exception("Working directory not specified.")
+
+        if not self.outdir:
+            raise Exception("Output directory not specified.")
+
         if not os.path.isdir(self.workdir):
             raise Exception("Working directory not found: %s" % self.workdir)
 
         if not os.path.isdir(self.outdir):
             raise Exception("Output directory not found: %s" % self.outdir)
 
-        if not os.path.exists("%s" % self.queue_file):
-            raise Exception("Can't find queue file: %s" % self.queue_file)
+    def _noncompleted_jobs(self):
+        jobs = {}
+        loaded_jobs = self._read_job_list()
+        for filename, job in loaded_jobs.items():
+            if not job["complete"]:
+                jobs[filename] = job
+        return jobs
 
-    def _process_queue_file(self):
+    def _process_jobs(self):
         self.encoders = []
-        linecount = 0
-        for line in open(self.queue_file).readlines():
-            linecount += 1
-            line = line.rstrip()
-            parts = line.split(',', 1)
-            # handle empty or malformed line
-            if not len(parts) == 2:
-                print("Skipping line %d: %s" % (linecount, line))
-                continue
-            (input_file, output_title) = parts
+        loaded_jobs = self._noncompleted_jobs()
+        for input_file, job_dict in loaded_jobs.items():
+            decomb = self.decomb
+            outdir = self.outdir
+            if "decomb" in job_dict:
+                decomb = job_dict["decomb"]
+            if "outdir" in job_dict:
+                outdir = job_dict["outdir"]
+            output_title = job_dict["output_title"]
+
             encoder = SingleEncoder(
-                self.workdir, self.tempdir, self.outdir, input_file, output_title, decomb=self.decomb)
-            self.encoders.append((encoder, line))
+                self.workdir, self.tempdir, outdir, input_file, output_title, decomb=decomb)
+            self.encoders.append((encoder, input_file))
 
-    def _backup_queue_file(self):
-        queue_file_backup = "%s.orig" % self.queue_file
-        copyfile(self.queue_file, queue_file_backup)
+    def _read_job_list(self):
+        try:
+            jobs = json.load(open(self.jobfile, "r"))
+        except FileNotFoundError:
+            jobs = None
 
-    def _delete_line_from_queue(self, line):
-        output = []
-        for queue_line in open(self.queue_file, "rb"):
-            if line != queue_line.rstrip():
-                output.append(queue_line)
+        return jobs
 
-        queue_out = open(self.queue_file, "wb")
-        for outline in output:
-            queue_out.write(outline)
-        queue_out.close()
+    def _write_job_list(self, job_dict):
+        json.dump(job_dict, open(self.jobfile, "w"), indent=2)
+
+    def _mark_job_complete(self, input_filename):
+        joblist = self._read_job_list()
+        job = joblist[input_filename]
+        job["complete"] = True
+        joblist[input_filename] = job
+        self._write_job_list(joblist)
+
+    def _create_job_list(self, jobs):
+        loaded_jobs = self._read_job_list()
+        if not loaded_jobs:
+            loaded_jobs = {}
+        for job in jobs:
+            if job["input_file"] in loaded_jobs:
+                continue
+            job_dict = {"complete": False}
+            for k, v in job.items():
+                if k != "input_file":
+                    job_dict[k] = v
+            loaded_jobs[job["input_file"]] = job_dict
+        self._write_job_list(loaded_jobs)
+
+    def _delete_job_list(self):
+        os.unlink(self.jobfile)
+
+    def _clear_completed(self):
+        loaded_jobs = self._read_job_list()
+        incomplete_jobs = 0
+        for input_file, job_dict in loaded_jobs.items():
+            if job_dict["complete"]:
+                continue
+            incomplete_jobs += 1
+        if incomplete_jobs == 0:
+            self._delete_job_list()
 
 
 class SingleEncoder(object):
@@ -94,15 +127,17 @@ class SingleEncoder(object):
         self.decomb = decomb
         self.tempdir = tempdir
         self.outdir = outdir
-        self.input_file = input_file
-        self.input_file_basename = os.path.basename(self.input_file)
+        self.input_file_basename = os.path.basename(input_file)
+        self.input_file = Path(workdir, self.input_file_basename)
         # self.fq_input_file="%s/%s" % (workdir,input_file)
-        self.crops_dir = "%s/%s" % (workdir, "Crops")
-        self.subtitles_dir = "%s/%s" % (workdir, "subtitles")
+        self.crops_dir = Path(workdir, "Crops")
+        self.subtitles_dir = Path(workdir, "subtitles")
         self.output_title = output_title
-        self.outlog = "%s.log" % self.input_file
-        self.fq_temp_file = "%s/%s.m4v" % (self.tempdir, self.output_title)
-        self.fq_output_file = "%s/%s.m4v" % (self.outdir, self.output_title)
+        outlog = "%s.log" % self.input_file_basename
+        self.outlog = Path(workdir, outlog)
+        outfile = "%s.m4v" % output_title
+        self.fq_temp_file = Path(self.tempdir, outfile)
+        self.fq_output_file = Path(self.outdir, outfile)
         self._sanity_check_dirs()
         self.command = self._build_command()
 
@@ -223,18 +258,15 @@ class SingleEncoder(object):
 
 
 def main():
-    args = parse_args(sys.argv[1:])
+    config = BatchEncoderConfig(sys.argv[1:])
 
-    decomb = args.decomb
-    workdir = args.workdir
-    outdir = args.outdir
-    if args.no_sleep:
+    if config.no_sleep:
         sc = SelfCaffeinate()
     else:
         sc = None
 
     print("Creating batch encoder.")
-    encoder = BatchEncoder(workdir, outdir, decomb=decomb)
+    encoder = BatchEncoder(config)
     print("Waiting for encoder to finish.")
     encoder.wait()
     print("Batch encoder done.")
