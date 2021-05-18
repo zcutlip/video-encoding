@@ -2,15 +2,17 @@
 
 # import argparse
 import glob
+import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
-import json
-from selfcaffeinate import SelfCaffeinate
-from typing import Dict
 from pathlib import Path
+from typing import Dict
+
+from selfcaffeinate import SelfCaffeinate
+
 from .config.config import BatchEncoderConfig
 
 
@@ -71,7 +73,13 @@ class BatchEncoder(object):
             output_title = job_dict["output_title"]
 
             encoder = SingleEncoder(
-                self.workdir, self.tempdir, outdir, input_file, output_title, decomb=decomb)
+                self.workdir,
+                self.tempdir,
+                outdir,
+                input_file,
+                output_title,
+                decomb=decomb,
+            )
             self.encoders.append((encoder, input_file))
 
     def _read_job_list(self):
@@ -123,7 +131,9 @@ class BatchEncoder(object):
 class SingleEncoder(object):
     TRANSCODE = "transcode-video"
 
-    def __init__(self, workdir, tempdir, outdir, input_file, output_title, decomb=False):
+    def __init__(
+        self, workdir, tempdir, outdir, input_file, output_title, decomb=False
+    ):
         self.decomb = decomb
         self.tempdir = tempdir
         self.outdir = outdir
@@ -146,7 +156,8 @@ class SingleEncoder(object):
         print(self.command)
         self.outlog_file = open(self.outlog, "wb", 0)
         self.process = subprocess.Popen(
-            self.command, stdout=self.outlog_file, stderr=self.outlog_file, bufsize=0)
+            self.command, stdout=self.outlog_file, stderr=self.outlog_file, bufsize=0
+        )
 
     def _wait(self):
         print("Waiting for encode job of %s to complete." % self.input_file)
@@ -210,8 +221,10 @@ class SingleEncoder(object):
         """
         sub_opt = ["--burn-subtitle", "scan"]
 
-        subtitle_glob = "%s/%s.*.srt" % (self.subtitles_dir,
-                                         os.path.splitext(self.input_file_basename)[0])
+        subtitle_glob = "%s/%s.*.srt" % (
+            self.subtitles_dir,
+            os.path.splitext(self.input_file_basename)[0],
+        )
 
         matching_srt_files = glob.glob(subtitle_glob)
         for srt_file in matching_srt_files:
@@ -223,8 +236,7 @@ class SingleEncoder(object):
 
     def _get_crop_option(self):
         """build option list for cropping video."""
-        crop_file = "%s/%s_crop.txt" % (self.crops_dir,
-                                        self.input_file_basename)
+        crop_file = "%s/%s_crop.txt" % (self.crops_dir, self.input_file_basename)
 
         try:
             crop_val = open(crop_file, "rb").readline().strip()
@@ -274,5 +286,5 @@ def main():
         sc = None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
