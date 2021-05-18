@@ -11,7 +11,7 @@ import json
 from selfcaffeinate import SelfCaffeinate
 from typing import Dict
 from pathlib import Path
-from config.config import BatchEncoderConfig
+from .config.config import BatchEncoderConfig
 
 
 class BatchEncoder(object):
