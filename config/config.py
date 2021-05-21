@@ -29,6 +29,13 @@ class BatchEncoderParsedArgs(argparse.ArgumentParser):
             default=None,
         )
 
+        self.add_argument(
+            "--report-path", help="Write encoding report to the specified path."
+        )
+        self.add_argument(
+            "--report-email", help="Email report to the specified email address."
+        )
+
     def parse_args(self, args=None):
         parsed_args = None
         try:
