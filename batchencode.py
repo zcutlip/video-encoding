@@ -3,6 +3,7 @@
 # import argparse
 import glob
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -20,7 +21,10 @@ class BatchEncoder(object):
     QUEUE_FILE = "queue.txt"
     JOB_QUEUE_FILE = "jobs.json"
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, logger=None):
+        if not logger:
+            logger = logging.getLogger("batch-encoder")
+            self.logger = logger
         self.decomb = config.decomb
         self.workdir = config.workdir
         self.outdir = config.outdir
@@ -132,8 +136,18 @@ class SingleEncoder(object):
     TRANSCODE = "transcode-video"
 
     def __init__(
-        self, workdir, tempdir, outdir, input_file, output_title, decomb=False
+        self,
+        workdir,
+        tempdir,
+        outdir,
+        input_file,
+        output_title,
+        decomb=False,
+        logger=None,
     ):
+        if not logger:
+            logger = logging.getLogger("single-encoder")
+        self.logger = logger
         self.decomb = decomb
         self.tempdir = tempdir
         self.outdir = outdir
@@ -152,15 +166,15 @@ class SingleEncoder(object):
         self.command = self._build_command()
 
     def run(self):
-        print("Running:")
-        print(self.command)
+        self.logger.info("Running:")
+        self.logger.info(self.command)
         self.outlog_file = open(self.outlog, "wb", 0)
         self.process = subprocess.Popen(
             self.command, stdout=self.outlog_file, stderr=self.outlog_file, bufsize=0
         )
 
     def _wait(self):
-        print("Waiting for encode job of %s to complete." % self.input_file)
+        self.logger.info("Waiting for encode job of %s to complete." % self.input_file)
         self.process.wait()
 
     def wait(self):
@@ -242,7 +256,7 @@ class SingleEncoder(object):
             crop_val = open(crop_file, "rb").readline().strip()
             crop_opt = ["--crop", crop_val]
         except Exception as e:
-            print(e)
+            self.logger.error(e)
             crop_opt = ["--crop", "detect"]
 
         return crop_opt
@@ -270,6 +284,7 @@ class SingleEncoder(object):
 
 
 def main():
+    logger = logging.getLogger()
     config = BatchEncoderConfig(sys.argv[1:])
 
     if config.no_sleep:
@@ -277,11 +292,11 @@ def main():
     else:
         sc = None
 
-    print("Creating batch encoder.")
+    logger.info("Creating batch encoder.")
     encoder = BatchEncoder(config)
-    print("Waiting for encoder to finish.")
+    logger.info("Waiting for encoder to finish.")
     encoder.wait()
-    print("Batch encoder done.")
+    logger.info("Batch encoder done.")
     if sc:
         sc = None
 
