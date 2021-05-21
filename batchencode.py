@@ -33,16 +33,28 @@ class BatchEncoder(object):
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
         self.jobs = config.jobs
         self._sanity_check_dirs()
+        self._report = EncodeReport()
         self._create_job_list(self.jobs)
         self._process_jobs()
 
-    def wait(self):
-        print("Running all encoders.")
+    @property
+    def report(self):
+        return self._report
+
+    def wait(self) -> int:
+        self.logger.info("Running all encoders.")
+        status = 0
         for encoder, input_file in self.encoders:
             encoder.run()
-            encoder.wait()
-            self._mark_job_complete(input_file)
+            return_code = encoder.wait()
+            if return_code:
+                status += 1
+            else:
+                self._mark_job_complete(input_file)
+            report = encoder.report
+            self._report.update_report(report)
         self._clear_completed()
+        return status
 
     def _sanity_check_dirs(self):
         if not self.workdir:
