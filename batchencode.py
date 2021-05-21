@@ -12,9 +12,9 @@ import tempfile
 from pathlib import Path
 from typing import Dict, Tuple
 
+from config.config import BatchEncoderConfig
+from encode_report import EncodeReport
 from selfcaffeinate import SelfCaffeinate
-
-from .config.config import BatchEncoderConfig
 
 
 class BatchEncoder(object):
@@ -157,6 +157,7 @@ class SingleEncoder(object):
         self.crops_dir = Path(workdir, "Crops")
         self.subtitles_dir = Path(workdir, "subtitles")
         self.output_title = output_title
+        self._report = EncodeReport()
         outlog = "%s.log" % self.input_file_basename
         self.outlog = Path(workdir, outlog)
         outfile = "%s.m4v" % output_title
@@ -165,23 +166,38 @@ class SingleEncoder(object):
         self._sanity_check_dirs()
         self.command = self._build_command()
 
+    @property
+    def report(self):
+        return self._report
+
     def run(self):
         self.logger.info("Running:")
         self.logger.info(self.command)
         self.outlog_file = open(self.outlog, "wb", 0)
         self.process = subprocess.Popen(
-            self.command, stdout=self.outlog_file, stderr=self.outlog_file, bufsize=0
+            self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
         )
 
     def _wait(self):
         self.logger.info("Waiting for encode job of %s to complete." % self.input_file)
         self.process.wait()
+        status = self.process.returncode
+        return status
+
+    def _err_out(self):
+        _, err_out = self.process.communicate()
+        return err_out
 
     def wait(self):
-        self._wait()
-        print("Moving encoded file to %s" % self.fq_output_file)
-        shutil.move(self.fq_temp_file, self.fq_output_file)
-        print("Done.")
+        status = self._wait()
+        if status == 0:
+            self.logger.info("Moving encoded file to %s" % self.fq_output_file)
+            shutil.move(self.fq_temp_file, self.fq_output_file)
+            self._report.add_encoded(self.input_file_basename, str(self.fq_output_file))
+        else:
+            err_out = self._err_out()
+            self._report.add_encoding_failure(self.input_file_basename, err_out)
+        self.logger.info("Done.")
 
     def _sanity_check_dirs(self):
         if not os.path.exists(self.input_file):
