@@ -315,10 +315,9 @@ def main():
     logger = logging.getLogger()
     config = BatchEncoderConfig(sys.argv[1:])
 
+    sc = None
     if config.no_sleep:
         sc = SelfCaffeinate()
-    else:
-        sc = None
 
     logger.info("Creating batch encoder.")
     encoder = BatchEncoder(config)
