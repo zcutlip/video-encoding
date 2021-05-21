@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 
 from selfcaffeinate import SelfCaffeinate
 
@@ -28,6 +28,7 @@ class BatchEncoder(object):
         self.decomb = config.decomb
         self.workdir = config.workdir
         self.outdir = config.outdir
+        self.encoders: Tuple[SingleEncoder, str] = []
         self.tempdir = tempfile.mkdtemp()
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
         self.jobs = config.jobs
@@ -65,7 +66,6 @@ class BatchEncoder(object):
         return jobs
 
     def _process_jobs(self):
-        self.encoders = []
         loaded_jobs = self._noncompleted_jobs()
         for input_file, job_dict in loaded_jobs.items():
             decomb = self.decomb
