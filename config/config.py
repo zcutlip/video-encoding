@@ -28,6 +28,14 @@ class BatchEncoderParsedArgs(argparse.ArgumentParser):
             action="store_true",
             default=None,
         )
+        self.add_argument(
+            "--no-auto-burn",
+            help="don't automatically burn first forced subtitle",
+            action="store_true",
+        )
+        self.add_argument(
+            "--add-subtitle", help="add track selected with language code (e.g., 'eng')"
+        )
 
         self.add_argument(
             "--report-path", help="Write encoding report to the specified path."
