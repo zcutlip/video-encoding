@@ -174,17 +174,17 @@ class SingleEncoder(object):
         if not logger:
             logger = logging.getLogger("single-encoder")
         self.logger = logger
-        self.decomb = decomb
         self.tempdir = tempdir
         self.outdir = outdir
         self.input_file_basename = os.path.basename(input_file)
+        self.output_title = output_title
+        self.decomb = decomb
         self.no_auto_burn = no_auto_burn
         self.add_subtitle = add_subtitle
         self.input_file = Path(workdir, self.input_file_basename)
         # self.fq_input_file="%s/%s" % (workdir,input_file)
         self.crops_dir = Path(workdir, "Crops")
         self.subtitles_dir = Path(workdir, "subtitles")
-        self.output_title = output_title
         self._report = EncodeReport()
         outlog = "%s.log" % self.input_file_basename
         self.outlog = Path(workdir, outlog)
