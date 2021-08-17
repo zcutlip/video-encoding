@@ -32,6 +32,8 @@ class BatchEncoder(object):
         self.tempdir = tempfile.mkdtemp()
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
         self.jobs = config.jobs
+        self.no_auto_burn = config.no_auto_burn
+        self.add_subtitle = config.add_subtitle
         self._sanity_check_dirs()
         self._report = EncodeReport()
         self._create_job_list(self.jobs)
@@ -82,10 +84,18 @@ class BatchEncoder(object):
         for input_file, job_dict in loaded_jobs.items():
             decomb = self.decomb
             outdir = self.outdir
+            add_subtitle = self.add_subtitle
+            no_auto_burn = self.no_auto_burn
+
             if "decomb" in job_dict:
                 decomb = job_dict["decomb"]
             if "outdir" in job_dict:
                 outdir = job_dict["outdir"]
+            if "add_subtitle" in job_dict:
+                add_subtitle = job_dict["add_subtitle"]
+            if "no_auto_burn" in job_dict:
+                no_auto_burn = job_dict["no_auto_burn"]
+
             output_title = job_dict["output_title"]
 
             encoder = SingleEncoder(
@@ -94,6 +104,8 @@ class BatchEncoder(object):
                 outdir,
                 input_file,
                 output_title,
+                no_auto_burn=no_auto_burn,
+                add_subtitle=add_subtitle,
                 decomb=decomb,
             )
             self.encoders.append((encoder, input_file))
@@ -155,6 +167,8 @@ class SingleEncoder(object):
         input_file,
         output_title,
         decomb=False,
+        no_auto_burn=False,
+        add_subtitle=None,
         logger=None,
     ):
         if not logger:
@@ -164,6 +178,8 @@ class SingleEncoder(object):
         self.tempdir = tempdir
         self.outdir = outdir
         self.input_file_basename = os.path.basename(input_file)
+        self.no_auto_burn = no_auto_burn
+        self.add_subtitle = add_subtitle
         self.input_file = Path(workdir, self.input_file_basename)
         # self.fq_input_file="%s/%s" % (workdir,input_file)
         self.crops_dir = Path(workdir, "Crops")
@@ -261,7 +277,13 @@ class SingleEncoder(object):
         Build option list for burning subtitles.
         Eventually this will be configurable at run-time and may return None.
         """
-        sub_opt = ["--burn-subtitle", "scan"]
+        if self.no_auto_burn:
+            sub_opt = ["--no-auto-burn"]
+        else:
+            sub_opt = ["--burn-subtitle", "scan"]
+
+        if self.add_subtitle:
+            sub_opt.extend(["--add-subtitle", self.add_subtitle])
 
         subtitle_glob = "%s/%s.*.srt" % (
             self.subtitles_dir,
