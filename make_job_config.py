@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
+import glob
+import json
 import os
 import sys
-import json
-import glob
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -13,10 +13,13 @@ class NoVideosException(Exception):
 
 
 class VideoEncodingConfigFile:
-    DEFAULT_TEMPLATE = Path(os.path.dirname(
-        os.path.realpath(__file__)), "encoding-jobs-template.json")
+    DEFAULT_TEMPLATE = Path(
+        os.path.dirname(os.path.realpath(__file__)), "encoding-jobs-template.json"
+    )
 
-    def __init__(self, video_list, config_file, outdir, decomb=False, workdir=None, template=None):
+    def __init__(
+        self, video_list, config_file, outdir, decomb=False, workdir=None, template=None
+    ):
         if not template:
             template = self.DEFAULT_TEMPLATE
         else:
@@ -66,6 +69,7 @@ class VideoEncodingConfigFile:
         video_list = []
         for item in glob.glob(video_list_glob):
             video_list.append(os.path.relpath(item, start=workdir))
+        video_list.sort()
 
         return video_list
 
@@ -83,11 +87,22 @@ class VideoEncodingConfigFile:
 
 def parse_args(args):
     parser = ArgumentParser()
-    parser.add_argument("video_list", help="Text file containing a line-by-line list of videos to encode or file glob to match a list of .mkv files")
+    parser.add_argument(
+        "video_list",
+        help="Text file containing a line-by-line list of videos to encode or file glob to match a list of .mkv files",
+    )
     parser.add_argument("config_file", help="Name of config file to write")
-    parser.add_argument("outdir", help="Output directory where encoded videos should be written")
-    parser.add_argument("--decomb", help="Decomb/deinterlace all videos when encoding", action="store_true")
-    parser.add_argument("--workdir", help="Working directory where video sources are found")
+    parser.add_argument(
+        "outdir", help="Output directory where encoded videos should be written"
+    )
+    parser.add_argument(
+        "--decomb",
+        help="Decomb/deinterlace all videos when encoding",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--workdir", help="Working directory where video sources are found"
+    )
     parser.add_argument("--template", help="Template to build job config from")
 
     parsed = parser.parse_args(args)
