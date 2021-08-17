@@ -334,6 +334,7 @@ class SingleEncoder(object):
 
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
     config = BatchEncoderConfig(sys.argv[1:])
 
