@@ -11,20 +11,20 @@ class BatchEncoderParsedArgs(argparse.ArgumentParser):
     def __init__(self, exit_on_error=True, **kwargs):
         super(BatchEncoderParsedArgs, self).__init__(**kwargs)
         self.exit_on_error = exit_on_error
-        self.add_argument("--config", help="Path to config file.")
+        self.add_argument("--config", help="path to config file")
         self.add_argument(
-            "--workdir", help="Directory containing video files to encode."
+            "--workdir", help="directory containing video files to encode"
         )
-        self.add_argument("--outdir", help="Directory to write encoded files to.")
+        self.add_argument("--outdir", help="directory to write encoded files to")
         self.add_argument(
             "--decomb",
-            help="Optionally have Handbrake decomb video.",
+            help="optionally have Handbrake decomb video",
             action="store_true",
             default=None,
         )
         self.add_argument(
             "--no-sleep",
-            help="Prevent macOS from sleeping while encoding.",
+            help="prevent macOS from sleeping while encoding",
             action="store_true",
             default=None,
         )
@@ -38,10 +38,10 @@ class BatchEncoderParsedArgs(argparse.ArgumentParser):
         )
 
         self.add_argument(
-            "--report-path", help="Write encoding report to the specified path."
+            "--report-path", help="write encoding report to the specified path"
         )
         self.add_argument(
-            "--report-email", help="Email report to the specified email address."
+            "--report-email", help="email report to the specified email address"
         )
 
     def parse_args(self, args=None):
