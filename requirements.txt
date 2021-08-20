@@ -1,1 +1,0 @@
- git+https://github.com/zcutlip/py-self-caffeinate.git
