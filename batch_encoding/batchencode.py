@@ -12,9 +12,10 @@ import tempfile
 from pathlib import Path
 from typing import Dict, Tuple
 
-from config.config import BatchEncoderConfig
-from encode_report import EncodeReport
 from selfcaffeinate import SelfCaffeinate
+
+from .config import BatchEncoderConfig
+from .encode_report import EncodeReport
 
 
 class BatchEncoder(object):
@@ -207,7 +208,8 @@ class SingleEncoder(object):
         )
 
     def _wait(self):
-        self.logger.info("Waiting for encode job of %s to complete." % self.input_file)
+        self.logger.info(
+            "Waiting for encode job of %s to complete." % self.input_file)
         self.process.wait()
         status = self.process.returncode
         return status
@@ -221,10 +223,12 @@ class SingleEncoder(object):
         if status == 0:
             self.logger.info("Moving encoded file to %s" % self.fq_output_file)
             shutil.move(self.fq_temp_file, self.fq_output_file)
-            self._report.add_encoded(self.input_file_basename, str(self.fq_output_file))
+            self._report.add_encoded(
+                self.input_file_basename, str(self.fq_output_file))
         else:
             err_out = self._err_out()
-            self._report.add_encoding_failure(self.input_file_basename, err_out)
+            self._report.add_encoding_failure(
+                self.input_file_basename, err_out)
         self.logger.info("Done.")
 
     def _sanity_check_dirs(self):
@@ -300,7 +304,8 @@ class SingleEncoder(object):
 
     def _get_crop_option(self):
         """build option list for cropping video."""
-        crop_file = "%s/%s_crop.txt" % (self.crops_dir, self.input_file_basename)
+        crop_file = "%s/%s_crop.txt" % (self.crops_dir,
+                                        self.input_file_basename)
 
         try:
             crop_val = open(crop_file, "rb").readline().strip()
