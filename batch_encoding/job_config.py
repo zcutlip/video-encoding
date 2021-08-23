@@ -1,7 +1,6 @@
-import json
 import glob
+import json
 import os
-
 from typing import List, Union
 
 from . import data
@@ -71,7 +70,8 @@ class EncodingConfig(dict):
         if add_subtitle:
             self["add_subtitle"] = add_subtitle
         self["decomb"] = decomb
-        self["jobs"] = self._make_job_list(video_list_input, self["workdir"], jobs=jobs)
+        self["jobs"] = self._make_job_list(
+            video_list_input, self["workdir"], jobs=jobs)
 
     def _load_template(self):
         loaded = None
@@ -96,7 +96,8 @@ class EncodingConfig(dict):
         # TODO: handle a list of pre-exisitng job objects
         videos = self._generate_video_list(video_list_input, workdir)
         if not videos:
-            raise EncodingJobNoInputException(f"No videos found in input specification: {video_list_input}")
+            raise EncodingJobNoInputException(
+                f"No videos found in input specification: {video_list_input}")
         job_list = []
         for input_file in videos:
             input_file = self._relpath(input_file, workdir)
@@ -131,7 +132,8 @@ class EncodingConfig(dict):
         if not os.path.isabs(input_file):
             input_abs_path = self._resolve_abs_path(input_file, prefix=workdir)
         if input_abs_path in self._input_files:
-            raise EncodingJobDuplicateInputException(f"Attempted to add input file twice: {input_abs_path}")
+            raise EncodingJobDuplicateInputException(
+                f"Attempted to add input file twice: {input_abs_path}")
         self._input_files.append(input_abs_path)
         self._input_files.sort()
         return list(self._input_files)
