@@ -20,7 +20,7 @@ class EncodingJob(dict):
 
     def __init__(self,
                  input_file: str,
-                 output_title: str = None,
+                 output_title: str = "",
                  workdir: str = None,
                  outdir: str = None,
                  disble_auto_burn: bool = False,
