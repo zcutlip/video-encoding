@@ -16,7 +16,7 @@ class EncodingJobNoInputException(Exception):
 
 
 class EncodingJob(dict):
-    JOB_TEMPLATE = "job-template"
+    JOB_TEMPLATE = "job-template.json"
 
     def __init__(self,
                  input_file: str,
