@@ -129,6 +129,7 @@ class EncodingConfig(dict):
         return pathname
 
     def _append_input_file(self, input_file, workdir):
+        input_abs_path = input_file
         if not os.path.isabs(input_file):
             input_abs_path = self._resolve_abs_path(input_file, prefix=workdir)
         if input_abs_path in self._input_files:
