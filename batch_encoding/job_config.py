@@ -172,4 +172,4 @@ class EncodingConfig(dict):
         return video_list
 
     def save(self, config_file):
-        json.dump(self.config, open(config_file, "w"), indent=2)
+        json.dump(self, open(config_file, "w"), indent=2)
