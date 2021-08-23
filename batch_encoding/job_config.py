@@ -150,6 +150,8 @@ class EncodingConfig(dict):
         return video_list
 
     def _video_list_from_glob(self, video_list_glob, workdir):
+        if workdir:
+            video_list_glob = os.path.join(workdir, video_list_glob)
         for item in glob.glob(video_list_glob):
             video_list = self._append_input_file(item, workdir)
         return video_list
