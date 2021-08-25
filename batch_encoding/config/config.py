@@ -15,7 +15,8 @@ class BatchEncoderParsedArgs(argparse.ArgumentParser):
         self.add_argument(
             "--workdir", help="directory containing video files to encode"
         )
-        self.add_argument("--outdir", help="directory to write encoded files to")
+        self.add_argument(
+            "--outdir", help="directory to write encoded files to")
         self.add_argument(
             "--decomb",
             help="optionally have Handbrake decomb video",
@@ -32,6 +33,7 @@ class BatchEncoderParsedArgs(argparse.ArgumentParser):
             "--no-auto-burn",
             help="don't automatically burn first forced subtitle",
             action="store_true",
+            default=None
         )
         self.add_argument(
             "--add-subtitle", help="add track selected with language code (e.g., 'eng')"
