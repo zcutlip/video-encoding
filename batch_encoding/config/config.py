@@ -73,6 +73,16 @@ class BatchEncoderConfig:
 
         argparser = parsed_args_cls(exit_on_error=exit_on_error)
         parsed_args = argparser.parse_args(args)
+
+        # Load config file from home config dir if it exists
+        # using package defaults.json as source of defaults
+        config = ConfigFile(
+            self.config_file,
+            parent=Directory(self.config_dir),
+            defaults=File("default.json", parent=PackageDirectory())
+        )
+        config.prepare()
+
         if parsed_args.config:
             config_path = Path(parsed_args.config)
             config_path = config_path.expanduser()
@@ -80,16 +90,24 @@ class BatchEncoderConfig:
 
             self.config_dir = os.path.dirname(config_path)
             self.config_file = os.path.basename(config_path)
+            # if we were passed a config file, that should override any config optoins
+            # in home config dir as well as package defaults. So load that config,
+            # using the previous config as source of defaults
+            provided_config = ConfigFile(
+                self.config_file,
+                parent=Directory(self.config_dir)
+            )
+            provided_config.prepare()
+
+            config.update(provided_config)
 
         self._dir = Directory(
             path=self.config_dir,
             # TODO: Later, turn on create=True
             create=False,
-            config=ConfigFile(
-                self.config_file,
-                defaults=File("./default.json", parent=PackageDirectory()),
-            ),
+            config=config,
         )
+
         self._dir.prepare()
 
         self.config = self._dir.config
