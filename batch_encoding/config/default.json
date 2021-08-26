@@ -1,7 +1,11 @@
 {
-    "workdir":null,
-    "outdir":null,
-    "decomb":false,
-    "no_sleep":true,
+    "encoding_config":{
+        "workdir":null,
+        "outdir":null,
+        "decomb":false,
+        "no_sleep":false,
+        "disable_auto_burn": false,
+        "jobs": []
+    },
     "pprint_config": true
 }
