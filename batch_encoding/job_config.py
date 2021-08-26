@@ -35,7 +35,7 @@ class EncodingJob(dict):
         if outdir:
             self["outdir"] = outdir
         if disble_auto_burn:
-            self["no_auto_burn"] = disble_auto_burn
+            self["disable_auto_burn"] = disble_auto_burn
         if add_subtitle:
             self["add_subtitle"] = add_subtitle
         if decomb:
@@ -66,7 +66,7 @@ class EncodingConfig(dict):
         self["outdir"] = outdir
         if workdir:
             self["workdir"] = workdir
-        self["no_auto_burn"] = disble_auto_burn
+        self["disable_auto_burn"] = disble_auto_burn
         if add_subtitle:
             self["add_subtitle"] = add_subtitle
         self["decomb"] = decomb

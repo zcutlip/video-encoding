@@ -7,7 +7,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, Tuple
@@ -33,7 +32,7 @@ class BatchEncoder(object):
         self.tempdir = tempfile.mkdtemp()
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
         self.jobs = config.jobs
-        self.no_auto_burn = config.no_auto_burn
+        self.disable_auto_burn = config.disable_auto_burn
         self.add_subtitle = config.add_subtitle
         self._sanity_check_dirs()
         self._report = EncodeReport()
@@ -86,7 +85,7 @@ class BatchEncoder(object):
             decomb = self.decomb
             outdir = self.outdir
             add_subtitle = self.add_subtitle
-            no_auto_burn = self.no_auto_burn
+            disable_auto_burn = self.disable_auto_burn
 
             if "decomb" in job_dict:
                 decomb = job_dict["decomb"]
@@ -94,8 +93,8 @@ class BatchEncoder(object):
                 outdir = job_dict["outdir"]
             if "add_subtitle" in job_dict:
                 add_subtitle = job_dict["add_subtitle"]
-            if "no_auto_burn" in job_dict:
-                no_auto_burn = job_dict["no_auto_burn"]
+            if "disable_auto_burn" in job_dict:
+                disable_auto_burn = job_dict["disable_auto_burn"]
 
             output_title = job_dict["output_title"]
 
@@ -105,7 +104,7 @@ class BatchEncoder(object):
                 outdir,
                 input_file,
                 output_title,
-                no_auto_burn=no_auto_burn,
+                disable_auto_burn=disable_auto_burn,
                 add_subtitle=add_subtitle,
                 decomb=decomb,
             )
@@ -168,7 +167,7 @@ class SingleEncoder(object):
         input_file,
         output_title,
         decomb=False,
-        no_auto_burn=False,
+        disable_auto_burn=False,
         add_subtitle=None,
         logger=None,
     ):
@@ -180,7 +179,7 @@ class SingleEncoder(object):
         self.input_file_basename = os.path.basename(input_file)
         self.output_title = output_title
         self.decomb = decomb
-        self.no_auto_burn = no_auto_burn
+        self.disable_auto_burn = disable_auto_burn
         self.add_subtitle = add_subtitle
         self.input_file = Path(workdir, self.input_file_basename)
         # self.fq_input_file="%s/%s" % (workdir,input_file)
@@ -281,8 +280,8 @@ class SingleEncoder(object):
         Build option list for burning subtitles.
         Eventually this will be configurable at run-time and may return None.
         """
-        if self.no_auto_burn:
-            sub_opt = ["--no-auto-burn"]
+        if self.disable_auto_burn:
+            sub_opt = ["--disable-auto-burn"]
         else:
             sub_opt = ["--burn-subtitle", "scan"]
 
@@ -341,8 +340,7 @@ class SingleEncoder(object):
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
-    config = BatchEncoderConfig(sys.argv[1:])
-
+    config = BatchEncoderConfig()
     sc = None
     if config.no_sleep:
         sc = SelfCaffeinate()
