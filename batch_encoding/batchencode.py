@@ -193,24 +193,31 @@ class SingleEncoder(object):
         self.fq_output_file = Path(self.outdir, outfile)
         self._sanity_check_dirs()
         self.command = self._build_command()
+        self.dry_run = False
 
     @property
     def report(self):
         return self._report
 
-    def run(self):
+    def run(self, dry_run=False):
         self.logger.info("Running:")
         self.logger.info(self.command)
-        self.outlog_file = open(self.outlog, "wb", 0)
-        self.process = subprocess.Popen(
-            self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
-        )
+        if dry_run:
+            self.dry_run = dry_run
+        else:
+            self.outlog_file = open(self.outlog, "wb", 0)
+            self.process = subprocess.Popen(
+                self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
+            )
 
     def _wait(self):
-        self.logger.info(
-            "Waiting for encode job of %s to complete." % self.input_file)
-        self.process.wait()
-        status = self.process.returncode
+        if not self.dry_run:
+            self.logger.info(
+                "Waiting for encode job of %s to complete." % self.input_file)
+            self.process.wait()
+            status = self.process.returncode
+        else:
+            status = 0
         return status
 
     def _err_out(self):
@@ -219,6 +226,8 @@ class SingleEncoder(object):
 
     def wait(self):
         status = self._wait()
+        if self.dry_run:
+            return status
         if status == 0:
             self.logger.info("Moving encoded file to %s" % self.fq_output_file)
             shutil.move(self.fq_temp_file, self.fq_output_file)
