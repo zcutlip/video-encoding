@@ -5,6 +5,7 @@
         "decomb":false,
         "no_sleep":false,
         "disable_auto_burn": false,
+        "add_subtitle": null,
         "jobs": []
     },
     "pprint_config": true
