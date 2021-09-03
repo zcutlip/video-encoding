@@ -3,10 +3,10 @@ import json
 import os
 from typing import Dict, List, Union
 
+from ..pkg_resources import pkgfiles
 from . import data
-from .config.base_config import make_config_parse_args
-from .config.default import BatchEncoderDefaultConfig
-from .pkg_resources import pkgfiles
+from .base_config import make_config_parse_args
+from .default import BatchEncoderDefaultConfig
 
 
 class EncodingJobDuplicateInputException(Exception):
