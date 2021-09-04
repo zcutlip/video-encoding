@@ -20,3 +20,7 @@ class BatchEncoderDefaultConfig(dict):
     @property
     def encoding_config(self):
         return self["encoding_config"]
+
+    @encoding_config.setter
+    def encoding_config(self, encoding_config):
+        self["encoding_config"] = encoding_config
