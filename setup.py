@@ -19,8 +19,7 @@ setup(name='batch-video-encoding',
       packages=find_packages(),
       entry_points={
           'console_scripts': [
-              'batchencode=batch_encoding.batchencode:main',
-              'makeconfig=batch_encoding.make_job_config:main'
+              'batchencode=batch_encoding.batchencode:main'
           ], },
       python_requires='>=3.7',
       install_requires=[
