@@ -1,5 +1,6 @@
 import json
 
+from .. import data
 from ..pkg_resources import pkgfiles
 
 
@@ -12,7 +13,7 @@ class BatchEncoderDefaultConfig(dict):
         self.update(defaults)
 
     def _load_defaults(self):
-        with pkgfiles(__package__).joinpath(self.DEFAULT_JSON).open("r") as _file:
+        with pkgfiles(data).joinpath(self.DEFAULT_JSON).open("r") as _file:
             loaded = json.load(_file)
         return loaded
 
