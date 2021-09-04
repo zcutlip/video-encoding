@@ -1,7 +1,6 @@
 import glob
 import json
 import os
-from copy import copy
 from typing import Dict, List, Union
 
 from .. import data
@@ -64,7 +63,7 @@ class EncodingConfig(dict):
                  video_input_str: str = ""):
         super().__init__(base_config)
         # used only for sanity checking we haven't added the same file twice
-        self._input_files = []
+        self._input_files = {}
 
         # Did we create a new config/update an existing one?
         self._new_or_updated = False
@@ -106,15 +105,20 @@ class EncodingConfig(dict):
                 job = EncodingJob.from_existing_job(job_dict)
                 job_list.append(job)
 
-        videos = self._generate_video_list(video_list_input, workdir, job_list)
-        if not videos:
-            raise EncodingJobNoInputException(
-                f"No videos found in input specification: {video_list_input}")
-        for input_file in videos:
+        videos_dict = self._generate_video_list(
+            video_list_input, workdir, job_list)
+        new_videos = [k for k, v in videos_dict.items() if v["new"] is True]
+        new_videos.sort()
+        if new_videos:
+            self._new_or_updated = True
+        for input_file in new_videos:
             input_file = self._relpath(input_file, workdir)
             job = EncodingJob(input_file)
             job_list.append(job)
 
+        if not job_list:
+            raise EncodingJobNoInputException(
+                f"No videos found in input specification: {video_list_input}")
         return job_list
 
     def _resolve_abs_path(self, pathname, prefix=None):
@@ -139,50 +143,42 @@ class EncodingConfig(dict):
         pathname = os.path.normpath(pathname)
         return pathname
 
-    def _append_input_file(self, input_file, workdir):
+    def _append_input_file(self, input_file, workdir, new=True):
         input_abs_path = input_file
         if not os.path.isabs(input_file):
             input_abs_path = self._resolve_abs_path(input_file, prefix=workdir)
         if input_abs_path in self._input_files:
             raise EncodingJobDuplicateInputException(
                 f"Attempted to add input file twice: {input_abs_path}")
-        self._input_files.append(input_abs_path)
-        self._input_files.sort()
+        self._input_files[input_abs_path] = {"new": new}
 
-        return list(self._input_files)
+        return dict(self._input_files)
 
     def _generate_video_list(self, video_list_file: str, workdir: str, job_list=[]):
-        video_list = []
-        video_list = self._video_list_from_job_list(
-            video_list, job_list, workdir)
-        orig_video_list = copy(video_list)
+        self._video_list_from_job_list(job_list, workdir)
 
         if video_list_file:
             if video_list_file.endswith(".txt"):
-                video_list = self._video_list_from_text_file(
-                    video_list, video_list_file, workdir)
+                self._video_list_from_text_file(video_list_file, workdir)
             else:
-                video_list = self._video_list_from_glob(
-                    video_list, video_list_file, workdir)
-        if video_list != orig_video_list:
-            self._new_or_updated = True
-        return video_list
+                self._video_list_from_glob(video_list_file, workdir)
+        return self._input_files
 
-    def _video_list_from_job_list(self, video_list, job_list: List[EncodingJob], workdir):
+    def _video_list_from_job_list(self, job_list: List[EncodingJob], workdir):
         for job in job_list:
             job_workdir = job.get("workdir", workdir)
             video_list = self._append_input_file(
-                job["input_file"], job_workdir)
+                job["input_file"], job_workdir, new=False)
         return video_list
 
-    def _video_list_from_glob(self, video_list, video_list_glob, workdir):
+    def _video_list_from_glob(self, video_list_glob, workdir):
         if workdir:
             video_list_glob = os.path.join(workdir, video_list_glob)
         for item in glob.glob(video_list_glob):
             video_list = self._append_input_file(item, workdir)
         return video_list
 
-    def _video_list_from_text_file(self, video_list, video_list_file, workdir):
+    def _video_list_from_text_file(self, video_list_file, workdir):
         with open(video_list_file, "r") as f:
             lines = f.readlines()
             for line in lines:
