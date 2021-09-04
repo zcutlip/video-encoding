@@ -178,16 +178,22 @@ class SingleEncoder(object):
         self.decomb = decomb
         self.disable_auto_burn = disable_auto_burn
         self.add_subtitle = add_subtitle
-        self.input_file = Path(workdir, self.input_file_basename)
-        # self.fq_input_file="%s/%s" % (workdir,input_file)
+        input_file = Path(workdir, self.input_file_basename)
+        self.input_file = str(input_file)
+
         self.crops_dir = Path(workdir, "Crops")
         self.subtitles_dir = Path(workdir, "subtitles")
         self._report = EncodeReport()
         outlog = "%s.log" % self.input_file_basename
         self.outlog = Path(workdir, outlog)
         outfile = "%s.m4v" % output_title
-        self.fq_temp_file = Path(self.tempdir, outfile)
-        self.fq_output_file = Path(self.outdir, outfile)
+
+        temp_file = Path(self.tempdir, outfile)
+        self.fq_temp_file = str(temp_file)
+
+        output_file = Path(self.outdir, outfile)
+        self.fq_output_file = str(output_file)
+
         self._sanity_check_dirs()
         self.command = self._build_command()
         self.dry_run = False
