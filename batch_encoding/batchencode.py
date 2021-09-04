@@ -43,11 +43,11 @@ class BatchEncoder(object):
     def report(self):
         return self._report
 
-    def wait(self) -> int:
+    def wait(self, dry_run=False) -> int:
         self.logger.info("Running all encoders.")
         status = 0
         for encoder, input_file in self.encoders:
-            encoder.run()
+            encoder.run(dry_run=dry_run)
             return_code = encoder.wait()
             if return_code:
                 status += 1
