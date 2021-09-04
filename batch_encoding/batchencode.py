@@ -15,6 +15,16 @@ from .config.encoding_config import EncodingConfig
 from .encode_report import EncodeReport
 
 
+class MalformedJobException(Exception):
+    pass
+
+
+class BatchEncoderJobsException(Exception):
+    def __init__(self, errors):
+        super().__init__()
+        self.errors = errors
+
+
 class BatchEncoder(object):
     JOB_QUEUE_FILE = "jobs.json"
 
@@ -26,6 +36,7 @@ class BatchEncoder(object):
         self.workdir = config["workdir"]
         self.outdir = config["outdir"]
         self.encoders: Tuple[SingleEncoder, str] = []
+        self.malformed_jobs = []
         self.tempdir = tempfile.mkdtemp()
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
         self.jobs = config["jobs"]
@@ -35,6 +46,8 @@ class BatchEncoder(object):
         self._report = EncodeReport()
         self._create_job_list(self.jobs)
         self._process_jobs()
+        if self.malformed_jobs:
+            raise BatchEncoderJobsException(self.malformed_jobs)
 
     @property
     def report(self):
@@ -94,18 +107,20 @@ class BatchEncoder(object):
                 disable_auto_burn = job_dict["disable_auto_burn"]
 
             output_title = job_dict["output_title"]
-
-            encoder = SingleEncoder(
-                self.workdir,
-                self.tempdir,
-                outdir,
-                input_file,
-                output_title,
-                disable_auto_burn=disable_auto_burn,
-                add_subtitle=add_subtitle,
-                decomb=decomb,
-            )
-            self.encoders.append((encoder, input_file))
+            try:
+                encoder = SingleEncoder(
+                    self.workdir,
+                    self.tempdir,
+                    outdir,
+                    input_file,
+                    output_title,
+                    disable_auto_burn=disable_auto_burn,
+                    add_subtitle=add_subtitle,
+                    decomb=decomb,
+                )
+                self.encoders.append((encoder, input_file))
+            except MalformedJobException as e:
+                self.malformed_jobs.append(e)
 
     def _read_job_list(self):
         try:
@@ -195,6 +210,7 @@ class SingleEncoder(object):
         self.fq_output_file = str(output_file)
 
         self._sanity_check_dirs()
+        self._sanity_check_params()
         self.command = self._build_command()
         self.dry_run = False
 
@@ -244,13 +260,19 @@ class SingleEncoder(object):
 
     def _sanity_check_dirs(self):
         if not os.path.exists(self.input_file):
-            raise Exception("Input file not found: %s" % self.input_file)
+            raise MalformedJobException(
+                "Input file not found: %s" % self.input_file)
 
         if not os.path.isdir(self.outdir):
             raise Exception("Output directory not found: %s" % self.outdir)
 
         if not os.path.isdir(self.tempdir):
             raise Exception("Temp directory not found: %s" % self.tempdir)
+
+    def _sanity_check_params(self):
+        if not self.output_title:
+            raise MalformedJobException(
+                f"No output title for {self.input_file}")
 
     def _build_command(self):
         crop_option = self._get_crop_option()
@@ -363,7 +385,14 @@ def main():
         logger.info("Saving updated config. Please review.")
         encoding_config.save()
     else:
-        encoder = BatchEncoder(encoding_config)
+        try:
+            encoder = BatchEncoder(encoding_config)
+        except BatchEncoderJobsException as e:
+            logger.error("Errors creating batch encoder")
+            for err in e.errors:
+                logger.error(f"{err}")
+                sc = None
+            return -1
         logger.info("Waiting for encoder to finish.")
         encoder.wait(dry_run=False)
         logger.info("Batch encoder done.")
@@ -377,6 +406,7 @@ def main():
 
     if sc:
         sc = None
+    return 0
 
 
 if __name__ == "__main__":
