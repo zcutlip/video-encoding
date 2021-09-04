@@ -13,27 +13,27 @@ from typing import Dict, Tuple
 
 from selfcaffeinate import SelfCaffeinate
 
-from .config import BatchEncoderConfig
+from .config.batch_config import ConfigFromParsedArgs
+from .config.encoding_config import EncodingConfig
 from .encode_report import EncodeReport
 
 
 class BatchEncoder(object):
-    QUEUE_FILE = "queue.txt"
     JOB_QUEUE_FILE = "jobs.json"
 
     def __init__(self, config: Dict, logger=None):
         if not logger:
             logger = logging.getLogger("batch-encoder")
             self.logger = logger
-        self.decomb = config.decomb
-        self.workdir = config.workdir
-        self.outdir = config.outdir
+        self.decomb = config["decomb"]
+        self.workdir = config["workdir"]
+        self.outdir = config["outdir"]
         self.encoders: Tuple[SingleEncoder, str] = []
         self.tempdir = tempfile.mkdtemp()
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
-        self.jobs = config.jobs
-        self.disable_auto_burn = config.disable_auto_burn
-        self.add_subtitle = config.add_subtitle
+        self.jobs = config["jobs"]
+        self.disable_auto_burn = config["disable_auto_burn"]
+        self.add_subtitle = config["add_subtitle"]
         self._sanity_check_dirs()
         self._report = EncodeReport()
         self._create_job_list(self.jobs)
@@ -349,16 +349,21 @@ class SingleEncoder(object):
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
-    config = BatchEncoderConfig()
+    config = ConfigFromParsedArgs()
     sc = None
-    if config.no_sleep:
+    if config.encoding_config["no_sleep"]:
         sc = SelfCaffeinate()
 
     logger.info("Creating batch encoder.")
-    encoder = BatchEncoder(config)
-    logger.info("Waiting for encoder to finish.")
-    encoder.wait()
-    logger.info("Batch encoder done.")
+    encoding_config: EncodingConfig = config.encoding_config
+    if encoding_config.new_or_updated:
+        logger.info("Saving updated config. Please review.")
+        encoding_config.save()
+    else:
+        encoder = BatchEncoder(encoding_config)
+        logger.info("Waiting for encoder to finish.")
+        encoder.wait(dry_run=False)
+        logger.info("Batch encoder done.")
 
     report = encoder.report
     if config.report_email:
