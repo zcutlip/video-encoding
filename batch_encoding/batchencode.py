@@ -91,6 +91,7 @@ class BatchEncoder(object):
 
     def _process_jobs(self):
         loaded_jobs = self._noncompleted_jobs()
+
         for input_file, job_dict in loaded_jobs.items():
             decomb = self.decomb
             outdir = self.outdir
