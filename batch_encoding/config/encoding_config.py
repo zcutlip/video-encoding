@@ -1,11 +1,11 @@
 import glob
 import json
 import os
+from copy import copy
 from typing import Dict, List, Union
 
+from .. import data
 from ..pkg_resources import pkgfiles
-from . import data
-from .base_config import make_config_parse_args
 from .default import BatchEncoderDefaultConfig
 
 
@@ -57,41 +57,34 @@ class EncodingJob(DefaultEncodingJob):
 
 
 class EncodingConfig(dict):
-    ENCODING_JOBS_TEMPLATE = "encoding-jobs-template.json"
 
     def __init__(self,
                  base_config: dict,
-                 video_list_input: str = ""):
+                 config_file: str,
+                 video_input_str: str = ""):
         super().__init__(base_config)
         # used only for sanity checking we haven't added the same file twice
         self._input_files = []
 
+        # Did we create a new config/update an existing one?
+        self._new_or_updated = False
+        # save this so we can write it to disk later if it is new or updated
+        self._config_file = config_file
+        self._update_from_config_file(config_file)
+
         self["jobs"] = self._make_job_list(
-            video_list_input, self["workdir"], jobs=self["jobs"])
+            video_input_str, self["workdir"], jobs=self["jobs"])
 
-    @classmethod
-    def new_config(cls):
-        default = BatchEncoderDefaultConfig()
-        base_config = default.encoding_config
-        parsed_args = make_config_parse_args()
-        base_config["outdir"] = parsed_args.outdir
+    @property
+    def new_or_updated(self):
+        return self._new_or_updated
 
-        if parsed_args.workdir is not None:
-            base_config["workdir"] = parsed_args.workdir
-        if parsed_args.decomb is not None:
-            base_config["decomb"] = parsed_args.decomb
-        if parsed_args.no_sleep is not None:
-            base_config["no_sleep"] = parsed_args.no_sleep
-        if parsed_args.disable_auto_burn is not None:
-            base_config["disable_auto_burn"] = parsed_args.disable_auto_burn
-        if parsed_args.add_subtitle is not None:
-            base_config["add_subtitle"] = parsed_args.add_subtitle
-
-        job_config_file = parsed_args.config_file
-        video_list = parsed_args.video_list
-        encoding_config = cls(base_config, video_list_input=video_list)
-        encoding_config.save(job_config_file)
-        return encoding_config
+    def _update_from_config_file(self, config_file):
+        try:
+            loaded = json.load(open(config_file, "r"))
+            self.update(loaded)
+        except FileNotFoundError:
+            self._new_or_updated = True
 
     def _relpath(self, input_file, workdir):
         relpath = input_file
@@ -155,37 +148,41 @@ class EncodingConfig(dict):
                 f"Attempted to add input file twice: {input_abs_path}")
         self._input_files.append(input_abs_path)
         self._input_files.sort()
+
         return list(self._input_files)
 
     def _generate_video_list(self, video_list_file: str, workdir: str, job_list=[]):
-        video_list = self._video_list_from_job_list(job_list, workdir)
+        video_list = []
+        video_list = self._video_list_from_job_list(
+            video_list, job_list, workdir)
+        orig_video_list = copy(video_list)
 
-        if video_list_file.endswith(".txt"):
-            video_list = self._video_list_from_text_file(
-                video_list_file, workdir)
-        else:
-            video_list = self._video_list_from_glob(video_list_file, workdir)
-
+        if video_list_file:
+            if video_list_file.endswith(".txt"):
+                video_list = self._video_list_from_text_file(
+                    video_list, video_list_file, workdir)
+            else:
+                video_list = self._video_list_from_glob(
+                    video_list, video_list_file, workdir)
+        if video_list != orig_video_list:
+            self._new_or_updated = True
         return video_list
 
-    def _video_list_from_job_list(self, job_list: List[EncodingJob], workdir):
-        video_list = []
+    def _video_list_from_job_list(self, video_list, job_list: List[EncodingJob], workdir):
         for job in job_list:
             job_workdir = job.get("workdir", workdir)
             video_list = self._append_input_file(
                 job["input_file"], job_workdir)
         return video_list
 
-    def _video_list_from_glob(self, video_list_glob, workdir):
-        video_list = []
+    def _video_list_from_glob(self, video_list, video_list_glob, workdir):
         if workdir:
             video_list_glob = os.path.join(workdir, video_list_glob)
         for item in glob.glob(video_list_glob):
             video_list = self._append_input_file(item, workdir)
         return video_list
 
-    def _video_list_from_text_file(self, video_list_file, workdir):
-        video_list = []
+    def _video_list_from_text_file(self, video_list, video_list_file, workdir):
         with open(video_list_file, "r") as f:
             lines = f.readlines()
             for line in lines:
@@ -199,5 +196,5 @@ class EncodingConfig(dict):
                     video_list = self._append_input_file(line, workdir)
         return video_list
 
-    def save(self, config_file):
-        json.dump(self, open(config_file, "w"), indent=2)
+    def save(self):
+        json.dump(self, open(self._config_file, "w"), indent=2)
