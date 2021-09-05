@@ -28,10 +28,11 @@ class BatchEncoderJobsException(Exception):
 class BatchEncoder(object):
     JOB_QUEUE_FILE = "jobs.json"
 
-    def __init__(self, config: Dict, logger=None):
+    def __init__(self, config: Dict, logger=None, dry_run=False):
         if not logger:
             logger = logging.getLogger("batch-encoder")
             self.logger = logger
+        self.dry_run = dry_run
         self.decomb = config["decomb"]
         self.workdir = config["workdir"]
         self.outdir = config["outdir"]
@@ -56,11 +57,11 @@ class BatchEncoder(object):
     def report(self):
         return self._report
 
-    def wait(self, dry_run=False) -> int:
+    def wait(self) -> int:
         self.logger.info("Running all encoders.")
         status = 0
         for encoder, input_file in self.encoders:
-            encoder.run(dry_run=dry_run)
+            encoder.run()
             # Before we block on the current encoder finishing,
             # we can do any outstanding archive tasks from previous encoders
             self._do_archive_queue()
@@ -133,6 +134,7 @@ class BatchEncoder(object):
                     disable_auto_burn=disable_auto_burn,
                     add_subtitle=add_subtitle,
                     decomb=decomb,
+                    dry_run=self.dry_run
                 )
                 self.encoders.append((encoder, input_file))
             except MalformedJobException as e:
@@ -208,10 +210,12 @@ class SingleEncoder(object):
         disable_auto_burn=False,
         add_subtitle=None,
         logger=None,
+        dry_run=False
     ):
         if not logger:
             logger = logging.getLogger("single-encoder")
         self.logger = logger
+        self.dry_run = dry_run
         self.tempdir = tempdir
         self.outdir = outdir
         self.input_file_basename = os.path.basename(input_file)
@@ -244,7 +248,6 @@ class SingleEncoder(object):
         self._sanity_check_dirs()
         self._sanity_check_params()
         self.command = self._build_command()
-        self.dry_run = False
 
     @property
     def report(self):
@@ -266,9 +269,7 @@ class SingleEncoder(object):
     def run(self, dry_run=False):
         self.logger.info("Running:")
         self.logger.info(self.command)
-        if dry_run:
-            self.dry_run = dry_run
-        else:
+        if not self.dry_run:
             self.outlog_file = open(self.outlog, "wb", 0)
             self.process = subprocess.Popen(
                 self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
@@ -276,17 +277,17 @@ class SingleEncoder(object):
 
     def wait(self):
         status = self._wait()
-        if self.dry_run:
-            return status
-        if status == 0:
-            self.logger.info("Moving encoded file to %s" % self.fq_output_file)
-            shutil.move(self.fq_temp_file, self.fq_output_file)
-            self._report.add_encoded(
-                self.input_file_basename, str(self.fq_output_file))
-        else:
-            err_out = self._err_out()
-            self._report.add_encoding_failure(
-                self.input_file_basename, err_out)
+        if not self.dry_run:
+            if status == 0:
+                self.logger.info("Moving encoded file to %s" %
+                                 self.fq_output_file)
+                shutil.move(self.fq_temp_file, self.fq_output_file)
+                self._report.add_encoded(
+                    self.input_file_basename, str(self.fq_output_file))
+            else:
+                err_out = self._err_out()
+                self._report.add_encoding_failure(
+                    self.input_file_basename, err_out)
         self.logger.info("Done.")
 
     def _wait(self):
