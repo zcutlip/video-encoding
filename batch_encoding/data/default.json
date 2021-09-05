@@ -1,5 +1,7 @@
 {
     "encoding_config":{
+        "media_root": null,
+        "archive_root": null,
         "workdir":null,
         "outdir":null,
         "decomb":false,
