@@ -470,15 +470,15 @@ def main():
                 sc = None
             return -1
         logger.info("Waiting for encoder to finish.")
-        encoder.wait(dry_run=True)
+        encoder.wait()
         logger.info("Batch encoder done.")
 
-        # report = encoder.report
-        # if config.report_email:
-        #     report.email_report(config.report_email)
+        report = encoder.report
+        if config["report_email"]:
+            report.email_report(config["report_email"])
 
-        # if config.report_path:
-        #     report.email_report(config.report_path)
+        if config["report_path"]:
+            report.write_report(config["report_path"])
 
     if sc:
         sc = None
