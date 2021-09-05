@@ -241,20 +241,6 @@ class SingleEncoder(object):
                 self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
             )
 
-    def _wait(self):
-        if not self.dry_run:
-            self.logger.info(
-                "Waiting for encode job of %s to complete." % self.input_file)
-            self.process.wait()
-            status = self.process.returncode
-        else:
-            status = 0
-        return status
-
-    def _err_out(self):
-        _, err_out = self.process.communicate()
-        return err_out
-
     def wait(self):
         status = self._wait()
         if self.dry_run:
@@ -269,6 +255,20 @@ class SingleEncoder(object):
             self._report.add_encoding_failure(
                 self.input_file_basename, err_out)
         self.logger.info("Done.")
+
+    def _wait(self):
+        if not self.dry_run:
+            self.logger.info(
+                "Waiting for encode job of %s to complete." % self.input_file)
+            self.process.wait()
+            status = self.process.returncode
+        else:
+            status = 0
+        return status
+
+    def _err_out(self):
+        _, err_out = self.process.communicate()
+        return err_out
 
     def _sanity_check_dirs(self):
         if not os.path.exists(self.input_file):
