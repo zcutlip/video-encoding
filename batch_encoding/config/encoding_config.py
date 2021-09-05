@@ -168,6 +168,7 @@ class EncodingConfig(dict):
         return self._input_files
 
     def _video_list_from_job_list(self, job_list: List[EncodingJob], workdir):
+        video_list = {}
         for job in job_list:
             job_workdir = job.get("workdir", workdir)
             video_list = self._append_input_file(
@@ -175,6 +176,7 @@ class EncodingConfig(dict):
         return video_list
 
     def _video_list_from_glob(self, video_list_glob, workdir):
+        video_list = {}
         if workdir:
             video_list_glob = os.path.join(workdir, video_list_glob)
         for item in glob.glob(video_list_glob):
@@ -182,6 +184,7 @@ class EncodingConfig(dict):
         return video_list
 
     def _video_list_from_text_file(self, video_list_file, workdir):
+        video_list = {}
         with open(video_list_file, "r") as f:
             lines = f.readlines()
             for line in lines:
