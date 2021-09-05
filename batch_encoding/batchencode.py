@@ -36,6 +36,7 @@ class BatchEncoder(object):
         self.workdir = config["workdir"]
         self.outdir = config["outdir"]
         self.encoders: Tuple[SingleEncoder, str] = []
+        self._archive_queue = []
         self.malformed_jobs = []
         self.tempdir = tempfile.mkdtemp()
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
