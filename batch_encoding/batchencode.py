@@ -377,6 +377,25 @@ class SingleEncoder(object):
             decomb_option = ["-H", "comb-detect", "--filter", "decomb"]
         return decomb_option
 
+    def _construct_archive_dst(self, archive_root, media_root, output_file):
+        # convert everything to a Path object in case they aren't already
+        archive_root = Path(archive_root)
+        media_root = Path(media_root)
+        output_file = Path(output_file)
+
+        # Find the subpath of the media root there the encoded file will be written
+        # E.g., /Volumes/media/videos/Movies/Star Wars (1977).m4v -> Movies/Star Wars (1977).m4v
+        relative_output = output_file.relative_to(media_root)
+
+        # Get the stem, e.g., Movies/Star Wars (1977)
+        relative_output = relative_output.stem
+
+        # Mirror this path in the archive root
+        # E.g., /Volumes/Media Archive/videos/Movies/Star Wars (1977)
+        archive_path = Path(archive_root, relative_output)
+
+        return archive_path
+
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
