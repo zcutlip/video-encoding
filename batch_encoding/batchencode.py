@@ -71,7 +71,7 @@ class BatchEncoder(object):
             else:
                 # queue up this archive task and we'll
                 # do it while waiting on the next encoder to finish
-                self._archive_queue.apend(encoder)
+                self._archive_queue.append(encoder)
                 self._mark_job_complete(input_file)
             report = encoder.report
             self._report.update_report(report)
