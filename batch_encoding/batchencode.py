@@ -248,13 +248,18 @@ class SingleEncoder(object):
         self._sanity_check_dirs()
         self._sanity_check_params()
         self.command = self._build_command()
+        self.encoding_complete = False
 
     @property
     def report(self):
         return self._report
 
     def needs_archive(self):
-        needs_archive = self.archive_dst is not None and self.archive_complete is False
+        needs_archive = (
+            self.archive_dst is not None and
+            self.encoding_complete and
+            not self.archive_complete
+        )
         return needs_archive
 
     def do_archive(self):
@@ -289,6 +294,8 @@ class SingleEncoder(object):
                 self._report.add_encoding_failure(
                     self.input_file_basename, err_out)
         self.logger.info("Done.")
+        if status == 0:
+            self.encoding_complete = True
         return status
 
     def _wait(self):
