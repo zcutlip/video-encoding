@@ -172,6 +172,14 @@ class BatchEncoder(object):
         if incomplete_jobs == 0:
             self._delete_job_list()
 
+    def _do_archive_queue(self):
+        self.logger.info("Checking archive queue")
+        encoder: SingleEncoder = None
+        while self._archive_queue:
+            encoder = self._archive_queue.pop()
+            if encoder.needs_archive():
+                encoder.do_archive()
+
 
 class SingleEncoder(object):
     TRANSCODE = "transcode-video"
