@@ -60,13 +60,23 @@ class BatchEncoder(object):
         status = 0
         for encoder, input_file in self.encoders:
             encoder.run(dry_run=dry_run)
+            # Before we block on the current encoder finishing,
+            # we can do any outstanding archive tasks from previous encoders
+            self._do_archive_queue()
             return_code = encoder.wait()
             if return_code:
                 status += 1
             else:
+                # queue up this archive task and we'll
+                # do it while waiting on the next encoder to finish
+                self._archive_queue.apend(encoder)
                 self._mark_job_complete(input_file)
             report = encoder.report
             self._report.update_report(report)
+
+        # Do any remaining archive tasks. This should only be the last encoder
+        # to have finished encoding
+        self._do_archive_queue()
         self._clear_completed()
         return status
 
