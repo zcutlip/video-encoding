@@ -78,6 +78,9 @@ class EncodingConfig(dict):
     def new_or_updated(self):
         return self._new_or_updated
 
+    def save(self):
+        json.dump(self, open(self._config_file, "w"), indent=2)
+
     def _update_from_config_file(self, config_file):
         try:
             loaded = json.load(open(config_file, "r"))
@@ -191,6 +194,3 @@ class EncodingConfig(dict):
                 if line:
                     video_list = self._append_input_file(line, workdir)
         return video_list
-
-    def save(self):
-        json.dump(self, open(self._config_file, "w"), indent=2)
