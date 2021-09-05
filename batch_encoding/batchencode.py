@@ -266,7 +266,7 @@ class SingleEncoder(object):
             shutil.copy2(self.input_file, self.archive_dst)
             self.archive_complete = True
 
-    def run(self, dry_run=False):
+    def run(self):
         self.logger.info("Running:")
         self.logger.info(self.command)
         if not self.dry_run:
@@ -289,6 +289,7 @@ class SingleEncoder(object):
                 self._report.add_encoding_failure(
                     self.input_file_basename, err_out)
         self.logger.info("Done.")
+        return status
 
     def _wait(self):
         if not self.dry_run:
