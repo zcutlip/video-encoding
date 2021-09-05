@@ -438,7 +438,7 @@ class SingleEncoder(object):
         relative_output = output_file.relative_to(media_root)
 
         # Get the stem, e.g., Movies/Star Wars (1977)
-        relative_output = relative_output.stem
+        relative_output = relative_output.with_suffix('')
 
         # Mirror this path in the archive root
         # E.g., /Volumes/Media Archive/videos/Movies/Star Wars (1977)
