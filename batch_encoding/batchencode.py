@@ -266,9 +266,10 @@ class SingleEncoder(object):
         if self.needs_archive():
             self.logger.info(
                 f"Archiving {self.input_file} to {self.archive_dst}/")
-            self.archive_dst.mkdir(parents=True, exist_ok=True)
-            # TODO: archive crop file and subtitle file if they're available
-            shutil.copy2(self.input_file, self.archive_dst)
+            if not self.dry_run:
+                self.archive_dst.mkdir(parents=True, exist_ok=True)
+                # TODO: archive crop file and subtitle file if they're available
+                shutil.copy2(self.input_file, self.archive_dst)
             self.archive_complete = True
 
     def run(self):
