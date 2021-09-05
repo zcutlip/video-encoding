@@ -79,12 +79,17 @@ class EncodingConfig(dict):
         self["jobs"] = self._make_job_list(
             video_input_str, self["workdir"], jobs=self["jobs"])
 
+        self.sanity_check_archive_paths()
+
     @property
     def new_or_updated(self):
         return self._new_or_updated
 
     def save(self):
         json.dump(self, open(self._config_file, "w"), indent=2)
+
+    def sanity_check(self):
+        self.sanity_check_archive_paths()
 
     def sanity_check_archive_paths(self):
         if self["archive_root"]:
