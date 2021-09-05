@@ -80,6 +80,8 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
             print("Configuration dictionary:")
             pprint(self, width=1)
 
+        self.encoding_config.sanity_check()
+
     def load_config(self, parsed_args):
         # No need to load default config because it's our base class. we already loaded it
         # config = BatchEncoderDefaultConfig()
