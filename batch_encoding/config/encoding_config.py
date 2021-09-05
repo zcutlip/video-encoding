@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+from pathlib import Path
 from typing import Dict, List, Union
 
 from .. import data
@@ -17,6 +18,10 @@ class EncodingJobNoInputException(Exception):
 
 
 class EncodingJobMalformedDictException(Exception):
+    pass
+
+
+class EncodingConfigArchivePathException(Exception):
     pass
 
 
@@ -80,6 +85,17 @@ class EncodingConfig(dict):
 
     def save(self):
         json.dump(self, open(self._config_file, "w"), indent=2)
+
+    def sanity_check_archive_paths(self):
+        if self["archive_root"]:
+            if not self["media_root"]:
+                raise EncodingConfigArchivePathException(
+                    "Archive root path provided without media root path")
+            media_root = Path(self["media_root"])
+            outdir = Path(self["outdir"])
+            if media_root not in outdir.parents:
+                raise EncodingConfigArchivePathException(
+                    f"Output directory {outdir} not a subdirectory of media root {media_root}")
 
     def _update_from_config_file(self, config_file):
         try:
