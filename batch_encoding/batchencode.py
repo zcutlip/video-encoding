@@ -216,6 +216,11 @@ class SingleEncoder(object):
         output_file = Path(self.outdir, outfile)
         self.fq_output_file = str(output_file)
 
+        self.archive_dst = None
+        if archive_root and media_root:
+            self.archive_dst = self._construct_archive_dst(
+                archive_root, media_root, output_file)
+
         self._sanity_check_dirs()
         self._sanity_check_params()
         self.command = self._build_command()
