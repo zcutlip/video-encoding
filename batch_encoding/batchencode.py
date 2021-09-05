@@ -301,6 +301,8 @@ class SingleEncoder(object):
 
     def _err_out(self):
         _, err_out = self.process.communicate()
+        # utf-8 decoding is default if not specified
+        err_out = err_out.decode()
         return err_out
 
     def _sanity_check_dirs(self):
