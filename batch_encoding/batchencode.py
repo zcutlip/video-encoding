@@ -216,6 +216,7 @@ class SingleEncoder(object):
         output_file = Path(self.outdir, outfile)
         self.fq_output_file = str(output_file)
 
+        self.archive_complete = False
         self.archive_dst = None
         if archive_root and media_root:
             self.archive_dst = self._construct_archive_dst(
@@ -229,6 +230,10 @@ class SingleEncoder(object):
     @property
     def report(self):
         return self._report
+
+    def needs_archive(self):
+        needs_archive = self.archive_dst is not None and self.archive_complete is False
+        return needs_archive
 
     def run(self, dry_run=False):
         self.logger.info("Running:")
