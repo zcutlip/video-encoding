@@ -24,6 +24,15 @@ def parse_args():
     parser.add_argument(
         "--workdir", help="directory containing video files to encode"
     )
+    parser.add_argument(
+        "--media-root",
+        help="Root path to encoded files. Used to calculate directory structure in the archive root."
+    )
+
+    parser.add_argument(
+        "--archive-root",
+        help="Root path to archive input files to. Directory structure will be mirrored from media root."
+    )
 
     parser.add_argument(
         "--decomb",
