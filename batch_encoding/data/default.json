@@ -10,5 +10,7 @@
         "add_subtitle": null,
         "jobs": []
     },
-    "pprint_config": true
+    "pprint_config": true,
+    "report_email": null,
+    "report_path": null
 }
