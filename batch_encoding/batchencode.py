@@ -42,6 +42,8 @@ class BatchEncoder(object):
         self.jobs = config["jobs"]
         self.disable_auto_burn = config["disable_auto_burn"]
         self.add_subtitle = config["add_subtitle"]
+        self.archive_root = config["archive_root"]
+        self.media_root = config["media_root"]
         self._sanity_check_dirs()
         self._report = EncodeReport()
         self._create_job_list(self.jobs)
@@ -115,6 +117,8 @@ class BatchEncoder(object):
                     outdir,
                     input_file,
                     output_title,
+                    self.archive_root,
+                    self.media_root,
                     disable_auto_burn=disable_auto_burn,
                     add_subtitle=add_subtitle,
                     decomb=decomb,
@@ -179,6 +183,8 @@ class SingleEncoder(object):
         outdir,
         input_file,
         output_title,
+        archive_root,
+        media_root,
         decomb=False,
         disable_auto_burn=False,
         add_subtitle=None,
