@@ -28,11 +28,12 @@ class BatchEncoderJobsException(Exception):
 class BatchEncoder(object):
     JOB_QUEUE_FILE = "jobs.json"
 
-    def __init__(self, config: Dict, logger=None, dry_run=False):
+    def __init__(self, config: Dict, logger=None, dry_run=False, skip_encode=False):
         if not logger:
             logger = logging.getLogger("batch-encoder")
             self.logger = logger
         self.dry_run = dry_run
+        self.skip_encode = skip_encode
         self.decomb = config["decomb"]
         self.workdir = config["workdir"]
         self.outdir = config["outdir"]
@@ -134,7 +135,8 @@ class BatchEncoder(object):
                     disable_auto_burn=disable_auto_burn,
                     add_subtitle=add_subtitle,
                     decomb=decomb,
-                    dry_run=self.dry_run
+                    dry_run=self.dry_run,
+                    skip_encode=self.skip_encode
                 )
                 self.encoders.append((encoder, input_file))
             except MalformedJobException as e:
@@ -210,12 +212,14 @@ class SingleEncoder(object):
         disable_auto_burn=False,
         add_subtitle=None,
         logger=None,
-        dry_run=False
+        dry_run=False,
+        skip_encode=False
     ):
         if not logger:
             logger = logging.getLogger("single-encoder")
         self.logger = logger
         self.dry_run = dry_run
+        self.skip_encode = skip_encode
         self.tempdir = tempdir
         self.outdir = outdir
         self.input_file_basename = os.path.basename(input_file)
@@ -262,6 +266,14 @@ class SingleEncoder(object):
         )
         return needs_archive
 
+    def needs_encode(self):
+        needs_encode = (
+            not self.encoding_complete and
+            not self.dry_run and
+            not self.skip_encode
+        )
+        return needs_encode
+
     def do_archive(self):
         if self.needs_archive():
             self.logger.info(
@@ -275,7 +287,7 @@ class SingleEncoder(object):
     def run(self):
         self.logger.info("Running:")
         self.logger.info(self.command)
-        if not self.dry_run:
+        if self.needs_encode():
             self.outlog_file = open(self.outlog, "wb", 0)
             self.process = subprocess.Popen(
                 self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
@@ -283,7 +295,7 @@ class SingleEncoder(object):
 
     def wait(self):
         status = self._wait()
-        if not self.dry_run:
+        if self.needs_encode():
             if status == 0:
                 self.logger.info("Moving encoded file to %s" %
                                  self.fq_output_file)
@@ -300,7 +312,7 @@ class SingleEncoder(object):
         return status
 
     def _wait(self):
-        if not self.dry_run:
+        if self.needs_encode():
             self.logger.info(
                 "Waiting for encode job of %s to complete." % self.input_file)
             self.process.wait()
@@ -456,13 +468,16 @@ def main():
         sc = SelfCaffeinate()
 
     logger.info("Creating batch encoder.")
+    skip = False
+    if config["skip_encode"]:
+        skip = True
     encoding_config: EncodingConfig = config.encoding_config
     if encoding_config.new_or_updated:
         logger.info("Saving updated config. Please review.")
         encoding_config.save()
     else:
         try:
-            encoder = BatchEncoder(encoding_config)
+            encoder = BatchEncoder(encoding_config, skip_encode=skip)
         except BatchEncoderJobsException as e:
             logger.error("Errors creating batch encoder")
             for err in e.errors:
