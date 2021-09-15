@@ -11,6 +11,7 @@ class EncodeReport:
     def __init__(self, logger=None):
         if not logger:
             logger = logging.getLogger("encoding-report")
+        self.logger = logger
         self.encoded = []
         self.encoding_failures = []
         self.date_str = None
