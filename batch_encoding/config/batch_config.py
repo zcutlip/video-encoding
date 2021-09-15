@@ -61,6 +61,14 @@ def parse_args():
     parser.add_argument(
         "--report-email", help="email report to the specified email address"
     )
+
+    parser.add_argument(
+        "--skip-encode",
+        help="Skip encoding. If archive parameters are provided, archiving will still happen.",
+        action="store_true",
+        default=None
+    )
+
     parsed = parser.parse_args()
     return parsed
 
