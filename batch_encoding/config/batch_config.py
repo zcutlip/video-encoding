@@ -110,7 +110,7 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
         # Load a user config if exists, else emtpy dict
         try:
             user_config = json.load(
-                open(Path(self.DEFAULT_CONFIG_PATH), "r"))
+                open(Path(self.user_config_path), "r"))
         except FileNotFoundError:
             user_config = {}
 
