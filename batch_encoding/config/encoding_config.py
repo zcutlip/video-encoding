@@ -78,8 +78,8 @@ class EncodingConfig(dict):
 
         self["jobs"] = self._make_job_list(
             video_input_str, self["workdir"], jobs=self["jobs"])
-
-        self.sanity_check_archive_paths()
+        # might not be fully configured yet, so don't sanity check paths
+        # self.sanity_check_archive_paths()
 
     @property
     def new_or_updated(self):
