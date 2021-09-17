@@ -86,7 +86,7 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
 
     def __init__(self):
         super().__init__()
-
+        self._user_config_path = self.DEFAULT_CONFIG_PATH
         parsed_args = parse_args()
         config = self.load_config(parsed_args)
         self.update(config)
@@ -96,6 +96,13 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
             pprint(self, width=1)
 
         self.encoding_config.sanity_check()
+
+    @property
+    def user_config_path(self):
+        config_path = Path(self._user_config_path)
+        config_path = config_path.expanduser()
+        config_path = config_path.resolve()
+        return config_path
 
     def load_config(self, parsed_args):
         # No need to load default config because it's our base class. we already loaded it
