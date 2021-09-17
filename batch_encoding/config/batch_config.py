@@ -134,6 +134,10 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
         # it as a key in the overall config dict
         encoding_config_file = parsed_args_dict.pop("config_file")
 
+        # get the "write user defaults" option, but pop it so we don't set
+        # it in the overall config
+        write_user_defaults = parsed_args_dict.pop("write_user_defaults", None)
+
         base_encoding_config = config.encoding_config
         if not base_encoding_config["workdir"]:
             base_encoding_config["workdir"] = parsed_args_dict.get("workdir")
@@ -162,7 +166,9 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
         # update our overall config with overrides from command line options
         config = self._update_config(
             config, parsed_args_options, subkey=encoding_conf_k)
-
+        if write_user_defaults:
+            self._write_user_defaults(config, self.user_config_path, pop_paths=[
+                                      "encoding_config.jobs"])
         return config
 
     def _update_config(self, orig: Dict, new: Dict, subkey=None):
