@@ -208,3 +208,20 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
             # that isn't a dictionary
             pruned = old_thing
         return pruned
+
+    def _write_user_defaults(self, config_dict, config_path, pop_paths=[]):
+        config_dir = config_path.parent
+        config_dir.mkdir(parents=True, exist_ok=True)
+        user_config: Dict = copy.deepcopy(config_dict)
+        for key_path in pop_paths:
+            keys = key_path.split(".")
+            container = user_config
+            print(keys)
+            for k in keys[:-1]:
+                print(k)
+                container = container[k]
+            key = keys[-1]
+            if key in container:
+                container.pop(key)
+
+        json.dump(user_config, open(config_path, "w"), indent=2)
