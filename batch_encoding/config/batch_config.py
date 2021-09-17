@@ -69,6 +69,13 @@ def parse_args():
         default=None
     )
 
+    parser.add_argument(
+        "--write-user-defaults",
+        help=f"Write default config to {str(ConfigFromParsedArgs.DEFAULT_CONFIG_PATH)}",
+        action="store_true",
+        default=None
+    )
+
     parsed = parser.parse_args()
     return parsed
 
