@@ -40,7 +40,8 @@ class DefaultEncodingJob(dict):
 
 
 class EncodingJob(DefaultEncodingJob):
-    ENCODING_CONFIG_KEYS = list(BatchEncoderDefaultConfig().keys())
+    ENCODING_CONFIG_KEYS = list(
+        BatchEncoderDefaultConfig().encoding_config_keys)
 
     def __init__(self, input_file, job_dict: Dict = {}):
         super().__init__()
