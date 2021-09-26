@@ -1,3 +1,4 @@
+import copy
 import glob
 import json
 import logging
@@ -167,11 +168,11 @@ class BatchEncoder(object):
         for job in jobs:
             if job["input_file"] in loaded_jobs:
                 continue
-            job_dict = {"complete": False}
-            for k, v in job.items():
-                if k != "input_file":
-                    job_dict[k] = v
-            loaded_jobs[job["input_file"]] = job_dict
+            job_dict: Dict = copy.copy(job)
+            input_file = job_dict.pop("input_file")
+            job_dict["complete"] = False
+
+            loaded_jobs[input_file] = job_dict
         self._write_job_list(loaded_jobs)
 
     def _delete_job_list(self):
