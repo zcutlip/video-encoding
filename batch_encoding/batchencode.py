@@ -113,6 +113,7 @@ class BatchEncoder(object):
             outdir = self.outdir
             add_subtitle = self.add_subtitle
             disable_auto_burn = self.disable_auto_burn
+            crop_params = self.crop_params
 
             if "decomb" in job_dict:
                 decomb = job_dict["decomb"]
@@ -122,6 +123,8 @@ class BatchEncoder(object):
                 add_subtitle = job_dict["add_subtitle"]
             if "disable_auto_burn" in job_dict:
                 disable_auto_burn = job_dict["disable_auto_burn"]
+            if "crop_params" in job_dict:
+                crop_params = job_dict["crop_params"]
 
             output_title = job_dict["output_title"]
             try:
@@ -133,6 +136,7 @@ class BatchEncoder(object):
                     output_title,
                     self.archive_root,
                     self.media_root,
+                    crop_params,
                     disable_auto_burn=disable_auto_burn,
                     add_subtitle=add_subtitle,
                     decomb=decomb,
@@ -209,6 +213,7 @@ class SingleEncoder(object):
         output_title,
         archive_root,
         media_root,
+        crop_params,
         decomb=False,
         disable_auto_burn=False,
         add_subtitle=None,
@@ -225,6 +230,7 @@ class SingleEncoder(object):
         self.outdir = outdir
         self.input_file_basename = os.path.basename(input_file)
         self.output_title = output_title
+        self.crop_params = crop_params
         self.decomb = decomb
         self.disable_auto_burn = disable_auto_burn
         self.add_subtitle = add_subtitle
