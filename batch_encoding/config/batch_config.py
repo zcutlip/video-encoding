@@ -63,6 +63,10 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--crop-params", help="Crop parameters",
+    )
+
+    parser.add_argument(
         "--skip-encode",
         help="Skip encoding. If archive parameters are provided, archiving will still happen.",
         action="store_true",
