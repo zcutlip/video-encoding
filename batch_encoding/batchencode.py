@@ -413,14 +413,9 @@ class SingleEncoder(object):
 
     def _get_crop_option(self):
         """build option list for cropping video."""
-        crop_file = "%s/%s_crop.txt" % (self.crops_dir,
-                                        self.input_file_basename)
-
-        try:
-            crop_val = open(crop_file, "rb").readline().strip()
-            crop_opt = ["--crop", crop_val]
-        except Exception as e:
-            self.logger.error(e)
+        if self.crop_params:
+            crop_opt = ["--crop", self.crop_params]
+        else:
             crop_opt = ["--crop", "detect"]
 
         return crop_opt
