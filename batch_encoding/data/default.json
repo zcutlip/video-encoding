@@ -8,6 +8,7 @@
         "no_sleep":false,
         "disable_auto_burn": false,
         "add_subtitle": null,
+        "crop_params": null,
         "jobs": []
     },
     "pprint_config": true,
