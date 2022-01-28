@@ -5,6 +5,68 @@ from email import message
 from pathlib import Path
 
 
+class EncodedValueError(ValueError):
+    pass
+
+
+class Encoded:
+    def __init__(self,
+                 src_path: str,
+                 dest_path: str,
+                 success: str,
+                 err_text: str = None,
+                 total_seconds: int = 0,
+                 encoding_seconds: int = 0,
+                 archiving_seconds: int = None):
+        self.src_path = src_path
+        self.dest_path = dest_path
+        self.success = success
+        self.err_text = err_text
+        self._total_elapsed = self._divmod_seconds(total_seconds)
+        self._encoding_elapsed = self._divmod_seconds(encoding_seconds)
+        if archiving_seconds is not None:
+            self._archiving_elapsed = self._divmod_seconds(archiving_seconds)
+        else:
+            self._archiving_elapsed = None
+
+    def _divmod_seconds(self, seconds):
+        if seconds < 0:
+            raise EncodedValueError(f"Invalid number of seconds: {seconds}")
+
+        hours, remainder = divmod(seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return hours, minutes, seconds
+
+    def _hr_min_sec_str(self, hours, minutes, seconds):
+        _str = ""
+        if hours:
+            _str += f"{hours:02d}:"
+        _str += f"{minutes:02d}:{seconds:02d}"
+        return _str
+
+    @property
+    def total_elapsed(self) -> str:
+        total_str = self._hr_min_sec_str(*self._total_elapsed)
+        return total_str
+
+    @property
+    def encoding_elapsed(self):
+        encoding_str = self._hr_min_sec_str(*self._encoding_elapsed)
+        return encoding_str
+
+    @property
+    def archiving_elapsed(self):
+        archiving_str = None
+        if self._archiving_elapsed is not None:
+            archiving_str = self._hr_min_sec_str(*self._archiving_elapsed)
+
+        return archiving_str
+
+    def add_archiving_elapsed(self, archiving_seconds):
+        archving_elapsed = self._divmod_seconds(archiving_seconds)
+        self._archiving_elapsed = archving_elapsed
+
+
 class EncodeReport:
     EMAIL_FROM = "encoder@ascendency.org"
 
