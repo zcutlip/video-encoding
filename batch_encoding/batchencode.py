@@ -1,4 +1,5 @@
 import copy
+import datetime
 import glob
 import json
 import logging
@@ -13,7 +14,7 @@ from selfcaffeinate import SelfCaffeinate
 
 from .config.batch_config import ConfigFromParsedArgs
 from .config.encoding_config import EncodingConfig
-from .encode_report import EncodeReport
+from .encode_report import Encoded, EncodeReport
 
 
 class MalformedJobException(Exception):
@@ -260,6 +261,13 @@ class SingleEncoder(object):
         self._sanity_check_params()
         self.command = self._build_command()
         self.encoding_complete = False
+        self._total_start = None
+        self._total_stop = None
+        self._encoding_start = None
+        self._encoding_stop = None
+        self._archive_start = None
+        self._archive_stop = None
+        self._encoded: Encoded = None
 
     @property
     def report(self):
@@ -283,12 +291,14 @@ class SingleEncoder(object):
 
     def do_archive(self):
         if self.needs_archive():
+            self._archive_start = datetime.datetime.now()
             self.logger.info(
                 f"Archiving {self.input_file} to {self.archive_dst}/")
             if not self.dry_run:
                 self.archive_dst.mkdir(parents=True, exist_ok=True)
                 # TODO: archive crop file and subtitle file if they're available
                 shutil.copy2(self.input_file, self.archive_dst)
+            self._archive_stop = datetime.datetime.now()
             self.archive_complete = True
 
     def run(self):
@@ -296,6 +306,8 @@ class SingleEncoder(object):
         self.logger.info(self.command)
         if self.needs_encode():
             self.outlog_file = open(self.outlog, "wb", 0)
+            start = datetime.datetime.now()
+            self._total_start = self._encoding_start = start
             self.process = subprocess.Popen(
                 self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
             )
@@ -303,16 +315,30 @@ class SingleEncoder(object):
     def wait(self):
         status = self._wait()
         if self.needs_encode():
+            err_text = None
             if status == 0:
                 self.logger.info("Moving encoded file to %s" %
                                  self.fq_output_file)
                 shutil.move(self.fq_temp_file, self.fq_output_file)
-                self._report.add_encoded(
-                    self.input_file_basename, str(self.fq_output_file))
+                self._total_stop = datetime.datetime.now()
             else:
-                err_out = self._err_out()
-                self._report.add_encoding_failure(
-                    self.input_file_basename, err_out)
+                err_text = self._err_out()
+
+            delta = self._total_stop - self._total_start
+            total_sec = delta.seconds
+            delta = self._encoding_stop - self._encoding_start
+            encoding_sec = delta.seconds
+            encoded = Encoded(self.input_file_basename,
+                              self.fq_output_file,
+                              (status == 0),
+                              err_text=err_text,
+                              total_seconds=total_sec,
+                              encoding_seconds=encoding_sec)
+            self._encoded = encoded
+            self._report.add_encoded(encoded)
+        else:
+            self._total_stop = datetime.datetime.now()
+
         self.logger.info("Done.")
         if status == 0:
             self.encoding_complete = True
@@ -323,6 +349,7 @@ class SingleEncoder(object):
             self.logger.info(
                 "Waiting for encode job of %s to complete." % self.input_file)
             self.process.wait()
+            self._encoding_stop = datetime.datetime.now()
             status = self.process.returncode
         else:
             status = 0
