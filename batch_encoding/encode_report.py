@@ -3,6 +3,7 @@ import smtplib
 from datetime import datetime
 from email import message
 from pathlib import Path
+from typing import List
 
 
 class EncodedValueError(ValueError):
@@ -74,19 +75,19 @@ class EncodeReport:
         if not logger:
             logger = logging.getLogger("encoding-report")
         self.logger = logger
-        self.encoded = []
-        self.encoding_failures = []
+        self.encoded: List[Encoded] = []
+        self.encoding_failures: List[Encoded] = []
         self.date_str = None
 
     def update_report(self, report):
         self.encoded.extend(report.encoded)
         self.encoding_failures.extend(report.encoding_failures)
 
-    def add_encoded(self, src_path, dest_path):
-        self.encoded.append((src_path, dest_path))
-
-    def add_encoding_failure(self, src_path, err_text):
-        self.encoding_failures.append((src_path, err_text))
+    def add_encoded(self, encoded: Encoded):
+        if encoded.success:
+            self.encoded.append(encoded)
+        else:
+            self.encoding_failures.append(encoded)
 
     def report(self) -> str:
         report_lines = ["Video Encoding Report", ""]
@@ -100,15 +101,23 @@ class EncodeReport:
         if self.encoded:
             report_lines.extend(self._new_header("Encoded files"))
             # self.encoded is a list of (src, dst) tuples
-            for _, dst in self.encoded:
-                report_lines.append(dst)
+
+            for encoded in self.encoded:
+                dst = encoded.dest_path
+                encoding_time = encoded.encoding_elapsed
+                line = f"{dst} [{encoding_time}]"
+                report_lines.append(line)
             report_lines.append("")
 
         if self.encoding_failures:
             report_lines.extend(self._new_header("Encoding failures"))
-            for src, err_text in self.encoding_failures:
+            for encoded in self.encoding_failures:
+                src = encoded.src_path
+                err_text = encoded.err_text
+                total_elapsed = encoded.total_elapsed
                 report_lines.extend(self._new_header(src))
                 report_lines.append(err_text)
+                report_lines.append(f"Total elapsed: {total_elapsed}")
                 report_lines.append("")
 
         report_str = "\n".join(report_lines)
