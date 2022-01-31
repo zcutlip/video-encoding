@@ -49,6 +49,7 @@ class BatchEncoder(object):
         self.add_subtitle = config["add_subtitle"]
         self.archive_root = config["archive_root"]
         self.media_root = config["media_root"]
+        self.crop_params = config["crop_params"]
         self._sanity_check_dirs()
         self._report = EncodeReport()
         self._create_job_list(self.jobs)
