@@ -36,7 +36,6 @@ class BatchEncoder(object):
             self.logger = logger
         self.dry_run = dry_run
         self.skip_encode = skip_encode
-        self.decomb = config["decomb"]
         self.workdir = config["workdir"]
         self.outdir = config["outdir"]
         self.encoders: Tuple[SingleEncoder, str] = []
@@ -45,15 +44,10 @@ class BatchEncoder(object):
         self.tempdir = tempfile.mkdtemp()
         self.jobfile = Path(self.workdir, self.JOB_QUEUE_FILE)
         self.jobs = config["jobs"]
-        self.disable_auto_burn = config["disable_auto_burn"]
-        self.add_subtitle = config["add_subtitle"]
-        self.archive_root = config["archive_root"]
-        self.media_root = config["media_root"]
-        self.crop_params = config["crop_params"]
         self._sanity_check_dirs()
         self._report = EncodeReport()
         self._create_job_list(self.jobs)
-        self._process_jobs()
+        self._process_jobs(config)
         if self.malformed_jobs:
             raise BatchEncoderJobsException(self.malformed_jobs)
 
@@ -107,44 +101,38 @@ class BatchEncoder(object):
                 jobs[filename] = job
         return jobs
 
-    def _process_jobs(self):
+    def _process_jobs(self, config_dict: Dict):
         loaded_jobs = self._noncompleted_jobs()
+        job_config_template = copy.copy(config_dict)
+        job_config_template.pop("jobs")
+        for input_file, loaded_job in loaded_jobs.items():
+            job_dict = copy.copy(job_config_template)
+            job_dict["input_file"] = input_file
+            job_dict["output_title"] = loaded_job["output_title"]
 
-        for input_file, job_dict in loaded_jobs.items():
-            decomb = self.decomb
-            outdir = self.outdir
-            add_subtitle = self.add_subtitle
-            disable_auto_burn = self.disable_auto_burn
-            crop_params = self.crop_params
+            # override batch parameters with job-specific parameters
+            if "decomb" in loaded_job:
+                job_dict["decomb"] = loaded_job["decomb"]
+            if "outdir" in loaded_job:
+                job_dict["outdir"] = loaded_job["outdir"]
+            if "add_subtitle" in loaded_job:
+                job_dict["add_subtitle"] = loaded_job["add_subtitle"]
+            if "disable_auto_burn" in loaded_job:
+                job_dict["disable_auto_burn"] = loaded_job["disable_auto_burn"]
+            if "crop_params" in loaded_job:
+                job_dict["crop_params"] = loaded_job["crop_params"]
+            if "quality" in loaded_job:
+                job_dict["quality"] = loaded_job["quality"]
+            if "movie" in loaded_job:
+                job_dict["movie"] = loaded_job["movie"]
 
-            if "decomb" in job_dict:
-                decomb = job_dict["decomb"]
-            if "outdir" in job_dict:
-                outdir = job_dict["outdir"]
-            if "add_subtitle" in job_dict:
-                add_subtitle = job_dict["add_subtitle"]
-            if "disable_auto_burn" in job_dict:
-                disable_auto_burn = job_dict["disable_auto_burn"]
-            if "crop_params" in job_dict:
-                crop_params = job_dict["crop_params"]
-
-            output_title = job_dict["output_title"]
             try:
                 encoder = SingleEncoder(
-                    self.workdir,
                     self.tempdir,
-                    outdir,
-                    input_file,
-                    output_title,
-                    self.archive_root,
-                    self.media_root,
-                    crop_params,
-                    disable_auto_burn=disable_auto_burn,
-                    add_subtitle=add_subtitle,
-                    decomb=decomb,
+                    job_dict,
+                    logger=self.logger,
                     dry_run=self.dry_run,
-                    skip_encode=self.skip_encode
-                )
+                    skip_encode=self.skip_encode)
                 self.encoders.append((encoder, input_file))
             except MalformedJobException as e:
                 self.malformed_jobs.append(e)
@@ -206,36 +194,29 @@ class BatchEncoder(object):
 class SingleEncoder(object):
     TRANSCODE = "transcode-video"
 
-    def __init__(
-        self,
-        workdir,
-        tempdir,
-        outdir,
-        input_file,
-        output_title,
-        archive_root,
-        media_root,
-        crop_params,
-        decomb=False,
-        disable_auto_burn=False,
-        add_subtitle=None,
-        logger=None,
-        dry_run=False,
-        skip_encode=False
-    ):
+    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
         if not logger:
             logger = logging.getLogger("single-encoder")
         self.logger = logger
         self.dry_run = dry_run
         self.skip_encode = skip_encode
         self.tempdir = tempdir
+        self.job_config = job_config
+        # movie = job_config["movie"]
+        outdir = job_config["outdir"]
+        output_title = job_config["output_title"]
+        input_file = job_config["input_file"]
+        workdir = job_config["workdir"]
+        # quality = job_config["quality"]
+        archive_root = job_config["archive_root"]
+        media_root = job_config["media_root"]
         self.outdir = outdir
         self.input_file_basename = os.path.basename(input_file)
         self.output_title = output_title
-        self.crop_params = crop_params
-        self.decomb = decomb
-        self.disable_auto_burn = disable_auto_burn
-        self.add_subtitle = add_subtitle
+        self.crop_params = job_config["crop_params"]
+        self.decomb = job_config["decomb"]
+        self.disable_auto_burn = job_config["disable_auto_burn"]
+        self.add_subtitle = job_config["add_subtitle"]
         input_file = Path(workdir, self.input_file_basename)
         self.input_file = str(input_file)
 
