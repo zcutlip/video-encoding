@@ -67,6 +67,17 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--movie",
+        help="Treat this as Movie job rather than a TV show or other category",
+        action="store_true",
+        default=None,
+    )
+    parser.add_argument(
+        "--quality",
+        help="Quality string to add to the output filename. E.g., '1080p' or '4K'"
+    )
+
+    parser.add_argument(
         "--skip-encode",
         help="Skip encoding. If archive parameters are provided, archiving will still happen.",
         action="store_true",
