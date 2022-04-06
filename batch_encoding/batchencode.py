@@ -218,7 +218,7 @@ class SingleEncoder(object):
         output_title = job_config["output_title"]
         input_file = job_config["input_file"]
         workdir = job_config["workdir"]
-        # quality = job_config["quality"]
+        quality = job_config["quality"]
         archive_root = job_config["archive_root"]
         media_root = job_config["media_root"]
 
@@ -248,7 +248,10 @@ class SingleEncoder(object):
         outlog = "%s-output.log" % self.input_file_basename
 
         self.outlog = Path(workdir, outlog)
-        outfile = "%s.m4v" % output_title
+
+        # construct The Matrix Resurrections (2021) - 1080p.mv4
+        # from "The Matrix Resurrections (2021)" and "1080p"
+        outfile = self._construct_outfile_basename(output_title, quality)
 
         temp_file = Path(self.tempdir, outfile)
         self.fq_temp_file = str(temp_file)
@@ -502,6 +505,13 @@ class SingleEncoder(object):
         archive_path = Path(archive_root, relative_output)
 
         return archive_path
+
+    def _construct_outfile_basename(self, title, quality):
+        outfile_base = title
+        if quality:
+            outfile_base = f"{outfile_base} - {quality}"
+        outfile_base = f"{outfile_base}.m4v"
+        return outfile_base
 
 
 def main():
