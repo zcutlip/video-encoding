@@ -374,8 +374,9 @@ class SingleEncoder(object):
 
     def _sanity_check_dirs(self):
         if not os.path.exists(self.input_file):
-            raise MalformedJobException(
-                "Input file not found: %s" % self.input_file)
+            msg = f"Input file not found: {self.input_file}"
+            self.logger.error(msg)
+            raise MalformedJobException(msg)
 
         if os.path.exists(self.outdir):
             if not os.path.isdir(self.outdir):
@@ -392,7 +393,9 @@ class SingleEncoder(object):
                 raise e
 
         if not os.path.isdir(self.tempdir):
-            raise Exception("Temp directory not found: %s" % self.tempdir)
+            msg = "Temp directory not found: %s" % self.tempdir
+            self.logger.error(msg)
+            raise Exception(msg)
 
     def _sanity_check_params(self):
         if not self.output_title:
