@@ -245,7 +245,8 @@ class SingleEncoder(object):
         self.crops_dir = Path(workdir, "Crops")
         self.subtitles_dir = Path(workdir, "subtitles")
         self._report = EncodeReport()
-        outlog = "%s.log" % self.input_file_basename
+        outlog = "%s-output.log" % self.input_file_basename
+
         self.outlog = Path(workdir, outlog)
         outfile = "%s.m4v" % output_title
 
