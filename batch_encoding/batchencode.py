@@ -252,6 +252,7 @@ class SingleEncoder(object):
         # construct The Matrix Resurrections (2021) - 1080p.mv4
         # from "The Matrix Resurrections (2021)" and "1080p"
         outfile = self._construct_outfile_basename(output_title, quality)
+        self.job_json_name = f"{outfile}-config.json"
 
         temp_file = Path(self.tempdir, outfile)
         handbrake_log = f"{outfile}.log"
@@ -266,6 +267,8 @@ class SingleEncoder(object):
         if archive_root and media_root:
             self.archive_dir = self._construct_archive_dst(
                 archive_root, media_root, output_file)
+            # save job JSON to archive path
+            self.job_json_name = Path(self.archive_dir, self.job_json_name)
 
         self._sanity_check_dirs()
         self._sanity_check_params()
@@ -309,6 +312,8 @@ class SingleEncoder(object):
                 # TODO: archive crop file and subtitle file if they're available
                 shutil.copy2(self.input_file, self.archive_dir)
                 shutil.copy2(self.handbrake_log, self.archive_dir)
+                json.dump(self.job_config, open(
+                    self.job_json_name, "w"), indent=2)
             self._archive_stop = datetime.datetime.now()
             self.archive_complete = True
 
