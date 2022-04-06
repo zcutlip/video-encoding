@@ -338,6 +338,7 @@ class SingleEncoder(object):
                 shutil.move(self.fq_temp_file, self.fq_output_file)
                 self._total_stop = datetime.datetime.now()
             else:
+                self._total_stop = datetime.datetime.now()
                 err_text = self._err_out()
 
             delta = self._total_stop - self._total_start
