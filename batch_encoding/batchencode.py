@@ -90,8 +90,19 @@ class BatchEncoder(object):
         if not os.path.isdir(self.workdir):
             raise Exception("Working directory not found: %s" % self.workdir)
 
-        if not os.path.isdir(self.outdir):
-            raise Exception("Output directory not found: %s" % self.outdir)
+        if os.path.exists(self.outdir):
+            if not os.path.isdir(self.outdir):
+                msg = f"Output path exists but is not a directory: {self.outdir}"
+                self.logger.error(msg)
+                raise Exception(msg)
+        else:
+            try:
+                self.logger.info(f"Creating output path: {self.outdir}")
+                self.outdir.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                self.logger.error(
+                    f"Unable to create output path: {self.outdir}")
+                raise e
 
     def _noncompleted_jobs(self):
         jobs = {}
@@ -359,8 +370,19 @@ class SingleEncoder(object):
             raise MalformedJobException(
                 "Input file not found: %s" % self.input_file)
 
-        if not os.path.isdir(self.outdir):
-            raise Exception("Output directory not found: %s" % self.outdir)
+        if os.path.exists(self.outdir):
+            if not os.path.isdir(self.outdir):
+                msg = f"Output path exists but is not a directory: {self.outdir}"
+                self.logger.error(msg)
+                raise Exception(msg)
+        else:
+            try:
+                self.logger.info(f"Creating output path: {self.outdir}")
+                self.outdir.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                self.logger.error(
+                    f"Unable to create output path: {self.outdir}")
+                raise e
 
         if not os.path.isdir(self.tempdir):
             raise Exception("Temp directory not found: %s" % self.tempdir)
