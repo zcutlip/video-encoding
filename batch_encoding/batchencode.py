@@ -254,6 +254,8 @@ class SingleEncoder(object):
         outfile = self._construct_outfile_basename(output_title, quality)
 
         temp_file = Path(self.tempdir, outfile)
+        handbrake_log = f"{outfile}.log"
+        self.handbrake_log = Path(self.tempdir, handbrake_log)
         self.fq_temp_file = str(temp_file)
 
         output_file = Path(self.outdir, outfile)
@@ -306,6 +308,7 @@ class SingleEncoder(object):
                 self.archive_dir.mkdir(parents=True, exist_ok=True)
                 # TODO: archive crop file and subtitle file if they're available
                 shutil.copy2(self.input_file, self.archive_dir)
+                shutil.copy2(self.handbrake_log, self.archive_dir)
             self._archive_stop = datetime.datetime.now()
             self.archive_complete = True
 
