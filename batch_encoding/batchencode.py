@@ -202,7 +202,7 @@ class SingleEncoder(object):
         self.skip_encode = skip_encode
         self.tempdir = tempdir
         self.job_config = job_config
-        # movie = job_config["movie"]
+        movie = job_config["movie"]
         outdir = job_config["outdir"]
         output_title = job_config["output_title"]
         input_file = job_config["input_file"]
@@ -210,6 +210,17 @@ class SingleEncoder(object):
         # quality = job_config["quality"]
         archive_root = job_config["archive_root"]
         media_root = job_config["media_root"]
+
+        # Put movies in a title-based folder
+        # to support storing mutliple versions and other assets
+        # e.g.,
+        # /Movies
+        #     /Pulp Fiction (1994)
+        #         Pulp Fiction (1994) - 1080p.mkv
+        #         Pulp Fiction (1994) - SD.m4v
+        # https://support.plex.tv/articles/200381043-multi-version-movies/
+        if movie:
+            outdir = Path(outdir, output_title)
         self.outdir = outdir
         self.input_file_basename = os.path.basename(input_file)
         self.output_title = output_title
