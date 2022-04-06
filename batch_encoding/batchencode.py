@@ -260,9 +260,9 @@ class SingleEncoder(object):
         self.fq_output_file = str(output_file)
 
         self.archive_complete = False
-        self.archive_dst = None
+        self.archive_dir = None
         if archive_root and media_root:
-            self.archive_dst = self._construct_archive_dst(
+            self.archive_dir = self._construct_archive_dst(
                 archive_root, media_root, output_file)
 
         self._sanity_check_dirs()
@@ -283,7 +283,7 @@ class SingleEncoder(object):
 
     def needs_archive(self):
         needs_archive = (
-            self.archive_dst is not None and
+            self.archive_dir is not None and
             self.encoding_complete and
             not self.archive_complete
         )
@@ -301,11 +301,11 @@ class SingleEncoder(object):
         if self.needs_archive():
             self._archive_start = datetime.datetime.now()
             self.logger.info(
-                f"Archiving {self.input_file} to {self.archive_dst}/")
+                f"Archiving {self.input_file} to {self.archive_dir}/")
             if not self.dry_run:
-                self.archive_dst.mkdir(parents=True, exist_ok=True)
+                self.archive_dir.mkdir(parents=True, exist_ok=True)
                 # TODO: archive crop file and subtitle file if they're available
-                shutil.copy2(self.input_file, self.archive_dst)
+                shutil.copy2(self.input_file, self.archive_dir)
             self._archive_stop = datetime.datetime.now()
             self.archive_complete = True
 
