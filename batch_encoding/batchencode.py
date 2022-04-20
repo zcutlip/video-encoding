@@ -84,8 +84,14 @@ class BatchEncoder(object):
         if not self.workdir:
             raise Exception("Working directory not specified.")
 
+        if isinstance(self.workdir, str):
+            self.workdir = Path(self.workdir)
+
         if not self.outdir:
             raise Exception("Output directory not specified.")
+
+        if isinstance(self.outdir, str):
+            self.outdir = Path(self.outdir)
 
         if not os.path.isdir(self.workdir):
             raise Exception("Working directory not found: %s" % self.workdir)
