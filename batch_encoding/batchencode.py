@@ -257,7 +257,8 @@ class SingleEncoder(object):
 
         # construct The Matrix Resurrections (2021) - 1080p.mv4
         # from "The Matrix Resurrections (2021)" and "1080p"
-        outfile = self._construct_outfile_basename(output_title, quality)
+        outfile = self._construct_outfile_basename(
+            output_title, quality, movie)
         self.job_json_name = f"{outfile}-config.json"
 
         temp_file = Path(self.tempdir, outfile)
@@ -524,9 +525,9 @@ class SingleEncoder(object):
 
         return archive_path
 
-    def _construct_outfile_basename(self, title, quality):
+    def _construct_outfile_basename(self, title, quality, movie):
         outfile_base = title
-        if quality:
+        if movie and quality:
             outfile_base = f"{outfile_base} - {quality}"
         outfile_base = f"{outfile_base}.m4v"
         return outfile_base
