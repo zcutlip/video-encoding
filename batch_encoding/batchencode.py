@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from selfcaffeinate import SelfCaffeinate
 
@@ -279,14 +279,14 @@ class SingleEncoder(object):
 
         self._sanity_check_dirs()
         self._sanity_check_params()
-        self.command = self._build_command()
-        self.encoding_complete = False
-        self._total_start = None
-        self._total_stop = None
-        self._encoding_start = None
-        self._encoding_stop = None
-        self._archive_start = None
-        self._archive_stop = None
+        self.command: List[str] = self._build_command()
+        self.encoding_complete: bool = False
+        self._total_start: datetime.datetime = None
+        self._total_stop: datetime.datetime = None
+        self._encoding_start: datetime.datetime = None
+        self._encoding_stop: datetime.datetime = None
+        self._archive_start: datetime.datetime = None
+        self._archive_stop: datetime.datetime = None
         self._encoded: Encoded = None
 
     @property
