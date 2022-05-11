@@ -1,6 +1,6 @@
 import logging
 import smtplib
-from datetime import datetime
+from datetime import datetime, timedelta
 from email import message
 from pathlib import Path
 from typing import List
@@ -78,6 +78,11 @@ class EncodeReport:
         self.encoded: List[Encoded] = []
         self.encoding_failures: List[Encoded] = []
         self.date_str = None
+        self._start_time = datetime.now()
+        self._end_time = None
+
+    def finish(self):
+        self._end_time = datetime.now()
 
     def update_report(self, report):
         self.encoded.extend(report.encoded)
@@ -120,8 +125,19 @@ class EncodeReport:
                 report_lines.append(f"Total elapsed: {total_elapsed}")
                 report_lines.append("")
 
+        report_lines.extend(self._new_header("Total time"))
+        elapsed = self._elapsed_seconds()
+        report_lines.append(str(elapsed))
+
         report_str = "\n".join(report_lines)
         return report_str
+
+    def _elapsed_seconds(self):
+        if self._end_time is None:
+            self._end_time = datetime.now()
+        elapsed = self._end_time - self._start_time
+        elapsed = timedelta(seconds=elapsed.seconds)
+        return elapsed
 
     def write_report(self, report_path):
         p = Path(report_path)
