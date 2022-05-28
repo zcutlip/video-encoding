@@ -136,6 +136,8 @@ class BatchEncoder(object):
                 job_dict["add_subtitle"] = loaded_job["add_subtitle"]
             if "disable_auto_burn" in loaded_job:
                 job_dict["disable_auto_burn"] = loaded_job["disable_auto_burn"]
+            if "burn_subtitle_num" in loaded_job:
+                job_dict["burn_subtitle_num"] = loaded_job["burn_subtitle_num"]
             if "crop_params" in loaded_job:
                 job_dict["crop_params"] = loaded_job["crop_params"]
             if "quality" in loaded_job:
@@ -244,6 +246,7 @@ class SingleEncoder(object):
         self.crop_params = job_config["crop_params"]
         self.decomb = job_config["decomb"]
         self.disable_auto_burn = job_config["disable_auto_burn"]
+        self.burn_subtitle_num = job_config["burn_subtitle_num"]
         self.add_subtitle = job_config["add_subtitle"]
         input_file = Path(workdir, self.input_file_basename)
         self.input_file = str(input_file)
@@ -457,6 +460,8 @@ class SingleEncoder(object):
         """
         if self.disable_auto_burn:
             sub_opt = ["--disable-auto-burn"]
+        elif self.burn_subtitle_num:
+            sub_opt = ["--burn-subtitle", str(self.burn_subtitle_num)]
         else:
             sub_opt = ["--burn-subtitle", "scan"]
 

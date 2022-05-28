@@ -2,6 +2,7 @@
     "workdir": "/Volumes/Encoding/encoding/",
     "outdir": "",
     "disable_auto_burn": false,
+    "burn_subtitle_num": null,
     "add_subtitle": null,
     "decomb": false,
     "jobs": []

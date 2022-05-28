@@ -53,6 +53,11 @@ def parse_args():
         default=None
     )
     parser.add_argument(
+        "--burn-subtitle-num",
+        help="burn track selected by number into video",
+        default=None
+    )
+    parser.add_argument(
         "--add-subtitle", help="add track selected with language code (e.g., 'eng')"
     )
     parser.add_argument(
