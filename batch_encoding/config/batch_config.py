@@ -159,8 +159,12 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
         write_user_defaults = parsed_args_dict.pop("write_user_defaults", None)
 
         base_encoding_config = config.encoding_config
-        if not base_encoding_config["workdir"]:
-            base_encoding_config["workdir"] = parsed_args_dict.get("workdir")
+        # I don't think this is what we want
+        # this won't let a CLI workdir arg override the base config?
+        # commenting but leaving for now in case things break and I can't
+        # figure out why
+        # if not base_encoding_config["workdir"]:
+        #     base_encoding_config["workdir"] = parsed_args_dict.get("workdir")
 
         try:
             video_input_str = parsed_args_dict.pop("video_list")
