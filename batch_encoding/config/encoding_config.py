@@ -2,7 +2,7 @@ import glob
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from .. import data
 from ..pkg_resources import pkgfiles
@@ -77,8 +77,6 @@ class EncodingConfig(dict):
         self._config_file = config_file
         self._update_from_config_file(config_file)
 
-        self["jobs"] = self._make_job_list(
-            video_input_str, self["workdir"], jobs=self["jobs"])
         # might not be fully configured yet, so don't sanity check paths
         # self.sanity_check_archive_paths()
 
@@ -123,10 +121,12 @@ class EncodingConfig(dict):
             relpath = os.path.relpath(input_file, start=workdir)
         return relpath
 
-    def _make_job_list(self, video_list_input: str, workdir: Union[None, str], jobs=[]):
+    def make_job_list(self, video_list_input: str):
+        workdir = self["workdir"]
+        existing_jobs = self["jobs"]
         job_list = []
-        if jobs:
-            for job_dict in jobs:
+        if existing_jobs:
+            for job_dict in existing_jobs:
                 job = EncodingJob.from_existing_job(job_dict)
                 job_list.append(job)
 
@@ -144,7 +144,7 @@ class EncodingConfig(dict):
         if not job_list:
             raise EncodingJobNoInputException(
                 f"No videos found in input specification: {video_list_input}")
-        return job_list
+        self["jobs"] = job_list
 
     def _resolve_abs_path(self, pathname, prefix=None):
         # we need to do expanduser (e.g., turn ~/ into /Users/zach)

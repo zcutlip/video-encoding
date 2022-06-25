@@ -186,6 +186,8 @@ class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
         # update our overall config with overrides from command line options
         config = self._update_config(
             config, parsed_args_options, subkey=encoding_conf_k)
+
+        config.encoding_config.make_job_list(video_input_str)
         if write_user_defaults:
             self._write_user_defaults(config, self.user_config_path, pop_paths=[
                                       "encoding_config.jobs"])
