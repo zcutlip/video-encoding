@@ -79,7 +79,7 @@ def parse_args():
     )
     parser.add_argument(
         "--quality",
-        help="Quality string to add to the output filename. E.g., '1080p' or '4K'"
+        help="Quality string to add to the output filename. E.g., '1080p' or '4K'. Only affects resulting filename"
     )
 
     parser.add_argument(
