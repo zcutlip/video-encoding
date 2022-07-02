@@ -12,6 +12,7 @@
         "crop_params": null,
         "movie": false,
         "quality": null,
+        "m4v": false,
         "jobs": []
     },
     "pprint_config": true,

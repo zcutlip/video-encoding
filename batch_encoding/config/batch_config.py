@@ -83,6 +83,10 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--m4v", help="Output MP4, (with '.m4v' extension) instead of Matroska '.mkv' format",
+        action="store_true"
+    )
+    parser.add_argument(
         "--skip-encode",
         help="Skip encoding. If archive parameters are provided, archiving will still happen.",
         action="store_true",
