@@ -146,6 +146,8 @@ class BatchEncoder(object):
                 job_dict["m4v"] = loaded_job["m4v"]
             if "movie" in loaded_job:
                 job_dict["movie"] = loaded_job["movie"]
+            if "chapters" in loaded_job:
+                job_dict["chapters"] = loaded_job["chapters"]
 
             try:
                 encoder = SingleEncoder(
@@ -251,6 +253,7 @@ class SingleEncoder(object):
         self.burn_subtitle_num = job_config["burn_subtitle_num"]
         self.add_subtitle = job_config["add_subtitle"]
         self.m4v = job_config["m4v"]
+        self.chapter_spec = job_config["chapters"]
         input_file = Path(workdir, self.input_file_basename)
         self.input_file = str(input_file)
 
@@ -437,6 +440,8 @@ class SingleEncoder(object):
                 command.append(opt)
         if self.m4v:
             command.append("--m4v")
+        if self.chapter_spec:
+            command.extend(["--chapters", self.chapter_spec])
         command.append(self.input_file)
         command.append("--output")
         command.append(self.fq_temp_file)
