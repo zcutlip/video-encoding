@@ -13,6 +13,7 @@
         "movie": false,
         "quality": null,
         "m4v": false,
+        "chapters": null,
         "jobs": []
     },
     "pprint_config": true,

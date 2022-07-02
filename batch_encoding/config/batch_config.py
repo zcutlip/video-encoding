@@ -99,6 +99,11 @@ def parse_args():
         action="store_true",
         default=None
     )
+    parser.add_argument(
+        "--chapters",
+        help="select chapters, single or range (default: all)",
+        default=None
+    )
 
     parsed = parser.parse_args()
     return parsed
