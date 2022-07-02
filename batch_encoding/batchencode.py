@@ -142,6 +142,8 @@ class BatchEncoder(object):
                 job_dict["crop_params"] = loaded_job["crop_params"]
             if "quality" in loaded_job:
                 job_dict["quality"] = loaded_job["quality"]
+            if "m4v" in loaded_job:
+                job_dict["m4v"] = loaded_job["m4v"]
             if "movie" in loaded_job:
                 job_dict["movie"] = loaded_job["movie"]
 
@@ -248,6 +250,7 @@ class SingleEncoder(object):
         self.disable_auto_burn = job_config["disable_auto_burn"]
         self.burn_subtitle_num = job_config["burn_subtitle_num"]
         self.add_subtitle = job_config["add_subtitle"]
+        self.m4v = job_config["m4v"]
         input_file = Path(workdir, self.input_file_basename)
         self.input_file = str(input_file)
 
@@ -261,7 +264,7 @@ class SingleEncoder(object):
         # construct The Matrix Resurrections (2021) - 1080p.mv4
         # from "The Matrix Resurrections (2021)" and "1080p"
         outfile = self._construct_outfile_basename(
-            output_title, quality, movie)
+            output_title, quality, movie, self.m4v)
         self.job_json_name = f"{outfile}-config.json"
 
         temp_file = Path(self.tempdir, outfile)
@@ -432,7 +435,8 @@ class SingleEncoder(object):
         if decomb_option:
             for opt in decomb_option:
                 command.append(opt)
-        command.append("--m4v")
+        if self.m4v:
+            command.append("--m4v")
         command.append(self.input_file)
         command.append("--output")
         command.append(self.fq_temp_file)
@@ -530,11 +534,12 @@ class SingleEncoder(object):
 
         return archive_path
 
-    def _construct_outfile_basename(self, title, quality, movie):
+    def _construct_outfile_basename(self, title, quality, movie, m4v):
         outfile_base = title
         if movie and quality:
             outfile_base = f"{outfile_base} - {quality}"
-        outfile_base = f"{outfile_base}.m4v"
+        ext = "m4v" if m4v else "mkv"
+        outfile_base = f"{outfile_base}.{ext}"
         return outfile_base
 
 
