@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple
 from selfcaffeinate import SelfCaffeinate
 
 from .config.batch_config import ConfigFromParsedArgs
-from .config.encoding_config import EncodingConfig
+from .config.encoding_config import EncodingConfig, EncodingJobNoInputException
 from .encode_report import Encoded, EncodeReport
 
 
@@ -551,7 +551,11 @@ class SingleEncoder(object):
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
-    config = ConfigFromParsedArgs()
+    try:
+        config = ConfigFromParsedArgs()
+    except EncodingJobNoInputException as e:
+        logger.fatal(f"{e}")
+        return -1
     sc = None
     if config.encoding_config["no_sleep"]:
         sc = SelfCaffeinate()
