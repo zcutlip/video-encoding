@@ -548,7 +548,7 @@ class SingleEncoder(object):
         return outfile_base
 
 
-def main():
+def do_encoding():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
     try:
@@ -591,6 +591,14 @@ def main():
     if sc:
         sc = None
     return 0
+
+
+def main():
+    try:
+        return do_encoding()
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt: quitting")
+        return 1
 
 
 if __name__ == "__main__":
