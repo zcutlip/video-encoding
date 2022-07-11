@@ -1,5 +1,5 @@
 __title__ = "Batch Video Encoding"
-__version__ = "0.1.2.dev0"
+__version__ = "0.1.2"
 __summary__ = "A harness for betch-encoding DVD & Blu-Ray rips"
 
 """
