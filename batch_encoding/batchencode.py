@@ -8,10 +8,11 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 from selfcaffeinate import SelfCaffeinate
 
+from .command import EncodeCommand
 from .config.batch_config import ConfigFromParsedArgs
 from .config.encoding_config import EncodingConfig, EncodingJobNoInputException
 from .encode_report import Encoded, EncodeReport
@@ -215,7 +216,6 @@ class BatchEncoder(object):
 
 
 class SingleEncoder(object):
-    TRANSCODE = "transcode-video"
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
         if not logger:
@@ -288,7 +288,7 @@ class SingleEncoder(object):
 
         self._sanity_check_dirs()
         self._sanity_check_params()
-        self.command: List[str] = self._build_command()
+        self.command: EncodeCommand = self._build_command()
         self.encoding_complete: bool = False
         self._total_start: datetime.datetime = None
         self._total_stop: datetime.datetime = None
@@ -428,7 +428,7 @@ class SingleEncoder(object):
         crop_option = self._get_crop_option()
         subtitle_option = self._get_sub_option()
         decomb_option = self._get_decomb_option()
-        command = [self.TRANSCODE]
+        command = EncodeCommand()
         if crop_option:
             for opt in crop_option:
                 command.append(opt)
