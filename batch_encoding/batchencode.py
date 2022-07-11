@@ -321,8 +321,8 @@ class SingleEncoder(object):
     def do_archive(self):
         if self.needs_archive():
             self._archive_start = datetime.datetime.now()
-            self.logger.info(
-                f"Archiving {self.input_file} to {self.archive_dir}/")
+            self.logger.info(f"Archiving {os.path.basename(self.input_file)}")
+            self.logger.debug(f"...to {self.archive_dir}/")
             if not self.dry_run:
                 self.archive_dir.mkdir(parents=True, exist_ok=True)
                 # TODO: archive crop file and subtitle file if they're available
@@ -335,7 +335,7 @@ class SingleEncoder(object):
 
     def run(self):
         self.logger.info("Running:")
-        self.logger.info(self.command)
+        self.logger.info(f"{self.command}")
         if self.needs_encode():
             self.outlog_file = open(self.outlog, "wb", 0)
             start = datetime.datetime.now()
@@ -349,8 +349,8 @@ class SingleEncoder(object):
         if self.needs_encode():
             err_text = None
             if status == 0:
-                self.logger.info("Moving encoded file to %s" %
-                                 self.fq_output_file)
+                self.logger.info(
+                    f"Moving encoded file to {self.fq_output_file}")
                 shutil.move(self.fq_temp_file, self.fq_output_file)
                 self._total_stop = datetime.datetime.now()
             else:
@@ -380,7 +380,7 @@ class SingleEncoder(object):
     def _wait(self):
         if self.needs_encode():
             self.logger.info(
-                "Waiting for encode job of %s to complete." % self.input_file)
+                f"Waiting for '{os.path.basename(self.input_file)}' to complete.")
             self.process.wait()
             self._encoding_stop = datetime.datetime.now()
             status = self.process.returncode
