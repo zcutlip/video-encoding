@@ -52,7 +52,7 @@ To use `batchencode`, an encoding configuration is required that defines the bat
 
 Take the following as example:
 
-- Y¸ou have a directory `/home/user/encoding`
+- You have a directory `/home/user/encoding`
 - Your encoding directory contains `file_01.mkv`, `file_02.mkv`, and `file_03.mkv`
 - You want them encoded to `/home/user/videos/TV Shows/My TV Show/Season 01/My TV Show - s01e01.m4v`, etc.
 
@@ -74,7 +74,14 @@ $ batchencode /home/user/encoding/encoding-jobs.json
 
 ## Advanced Usage
 
-`batchencode` provides several of options that can be specified as command line arguments or provided in the configuration file. Most of the command line options, if provided, will be added to the generated configuration file in phase 1. In phase 2, those same command line options can be used to override any options in the configuration file.
+`batchencode` provides several of options that can be specified as command line arguments or provided in the configuration file. Most of the command line options, if provided, will be added to the generated configuration file in phase 1.
+
+The encoding options can be set and overridden with the following order of precedence:
+
+1. Command line options specified during phase 2
+2. Where it makes sense, options specified in individual job dictionaries in the configuration file
+3. Global options specified in the configuration file
+4. Defaults in ~/.config/batchencoder/batchencoder.json
 
 Here's the help output from `batchencode`
 
@@ -82,10 +89,12 @@ Here's the help output from `batchencode`
 usage: batchencode [-h] [--video-list VIDEO_LIST] [--outdir OUTDIR]
                    [--workdir WORKDIR] [--media-root MEDIA_ROOT]
                    [--archive-root ARCHIVE_ROOT] [--decomb] [--no-sleep]
-                   [--disable-auto-burn] [--add-subtitle ADD_SUBTITLE]
-                   [--report-path REPORT_PATH] [--report-email REPORT_EMAIL]
-                   [--crop-params CROP_PARAMS] [--movie] [--quality QUALITY]
-                   [--skip-encode] [--write-user-defaults]
+                   [--disable-auto-burn]
+                   [--burn-subtitle-num BURN_SUBTITLE_NUM]
+                   [--add-subtitle ADD_SUBTITLE] [--report-path REPORT_PATH]
+                   [--report-email REPORT_EMAIL] [--crop-params CROP_PARAMS]
+                   [--movie] [--quality QUALITY] [--m4v] [--skip-encode]
+                   [--write-user-defaults] [--chapters CHAPTERS]
                    config_file
 
 positional arguments:
@@ -108,6 +117,8 @@ optional arguments:
   --decomb              optionally have Handbrake decomb video
   --no-sleep            prevent macOS from sleeping while encoding
   --disable-auto-burn   don't automatically burn first forced subtitle
+  --burn-subtitle-num BURN_SUBTITLE_NUM
+                        burn track selected by number into video
   --add-subtitle ADD_SUBTITLE
                         add track selected with language code (e.g., 'eng')
   --report-path REPORT_PATH
@@ -119,20 +130,25 @@ optional arguments:
   --movie               Treat this as Movie job rather than a TV show or other
                         category
   --quality QUALITY     Quality string to add to the output filename. E.g.,
-                        '1080p' or '4K'
+                        '1080p' or '4K'. Only affects resulting filename
+  --m4v                 Output MP4, (with '.m4v' extension) instead of
+                        Matroska '.mkv' format
   --skip-encode         Skip encoding. If archive parameters are provided,
                         archiving will still happen.
   --write-user-defaults
                         Write default config to
                         ~/.config/batchencoder/batchencoder.json
+  --chapters CHAPTERS   select chapters, single or range (default: all)
 ```
 
 Let's go through the options. Later we'll cover how these can be specified in your configuration file rather than CLI options.
 
-
 * `decomb`: Some input sources are interlaced, and "decombing" tells handbrake to do an intelligent form of deinterlacing. This is essential for sources such as DVD rips to eliminate unwatchable screen tearing.
 * `no-sleep`: On macOS only, this tells the operating system to not sleep while `batchencode` is running.
 * `disable-auto-burn`: Usually you want forced subtitles to be included, but on some input sources the results can be unexpected. In these situations, disable auto burning of forced subtitles
+* `burn-subtitle-num` If the desired subtitle track isn't detected properly, or the wrong one is detected, you can specify which one to burn
+* `report-path` Optionaly write a summary of the encoding jobs to the specified path
+* `report-email` Optionally email a summary of the encoding jobs to the specified email address
 
 
 ### Archiving
