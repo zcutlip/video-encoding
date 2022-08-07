@@ -1,0 +1,2 @@
+class MalformedJobException(Exception):
+    pass
