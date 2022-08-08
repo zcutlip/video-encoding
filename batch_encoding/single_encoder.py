@@ -14,24 +14,44 @@ from .encode_report import Encoded, EncodeReport
 from.exceptions import MalformedJobException
 
 
-class SingleEncoder(object):
+class SingleEncoderBase:
+    # Argument to '--crop' to trigger autodetection
+    CROP_AUTO_ARG = "detect"
+    SUBTITLE_AUTO_ARG = "scan"
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
         if not logger:
             logger = logging.getLogger("single-encoder")
         self.logger = logger
+
+        self.encoding_complete: bool = False
+        self._total_start: datetime.datetime = None
+        self._total_stop: datetime.datetime = None
+        self._encoding_start: datetime.datetime = None
+        self._encoding_stop: datetime.datetime = None
+        self._archive_start: datetime.datetime = None
+        self._archive_stop: datetime.datetime = None
+        self._encoded: Encoded = None
+
         self.dry_run = dry_run
         self.skip_encode = skip_encode
         self.tempdir = tempdir
         self.job_config = job_config
-        movie = job_config["movie"]
-        outdir = job_config["outdir"]
-        output_title = job_config["output_title"]
-        input_file = job_config["input_file"]
-        workdir = job_config["workdir"]
-        quality = job_config["quality"]
-        archive_root = job_config["archive_root"]
-        media_root = job_config["media_root"]
+        self.movie = job_config["movie"]
+        self.outdir = job_config["outdir"]
+        self.output_title = job_config["output_title"]
+        self.input_file = job_config["input_file"]
+        self.workdir = job_config["workdir"]
+        self.quality = job_config["quality"]
+        self.archive_root = job_config["archive_root"]
+        self.media_root = job_config["media_root"]
+        self.crop_params = job_config["crop_params"]
+        self.decomb = job_config["decomb"]
+        self.disable_auto_burn = job_config["disable_auto_burn"]
+        self.burn_subtitle_num = job_config["burn_subtitle_num"]
+        self.add_subtitle = job_config["add_subtitle"]
+        self.m4v = job_config["m4v"]
+        self.chapter_spec = job_config["chapters"]
 
         # Put movies in a title-based folder
         # to support storing mutliple versions and other assets
@@ -41,61 +61,41 @@ class SingleEncoder(object):
         #         Pulp Fiction (1994) - 1080p.mkv
         #         Pulp Fiction (1994) - SD.m4v
         # https://support.plex.tv/articles/200381043-multi-version-movies/
-        if movie:
-            outdir = Path(outdir, output_title)
-        self.outdir = outdir
-        self.input_file_basename = os.path.basename(input_file)
-        self.output_title = output_title
-        self.crop_params = job_config["crop_params"]
-        self.decomb = job_config["decomb"]
-        self.disable_auto_burn = job_config["disable_auto_burn"]
-        self.burn_subtitle_num = job_config["burn_subtitle_num"]
-        self.add_subtitle = job_config["add_subtitle"]
-        self.m4v = job_config["m4v"]
-        self.chapter_spec = job_config["chapters"]
-        input_file = Path(workdir, self.input_file_basename)
-        self.input_file = str(input_file)
+        if self.movie:
+            self.outdir = Path(self.outdir, self.output_title)
 
-        self.crops_dir = Path(workdir, "Crops")
-        self.subtitles_dir = Path(workdir, "subtitles")
+        self.input_file_basename = os.path.basename(self.input_file)
+        self.fq_input_file = Path(self.workdir, self.input_file_basename)
+        self.subtitles_dir = Path(self.workdir, "subtitles")
         self._report = EncodeReport()
         outlog = "%s-output.log" % self.input_file_basename
-
-        self.outlog = Path(workdir, outlog)
+        self.outlog = Path(self.workdir, outlog)
 
         # construct The Matrix Resurrections (2021) - 1080p.mv4
         # from "The Matrix Resurrections (2021)" and "1080p"
         outfile = self._construct_outfile_basename(
-            output_title, quality, movie, self.m4v)
+            self.output_title, self.quality, self.movie, self.m4v)
         self.job_json_name = f"{outfile}-config.json"
+        output_file = Path(self.outdir, outfile)
+        self.fq_output_file = output_file
+
+        encoder_log = f"{outfile}.log"
+        self.encoder_log = Path(self.tempdir, encoder_log)
 
         temp_file = Path(self.tempdir, outfile)
-        handbrake_log = f"{outfile}.log"
-        self.handbrake_log = Path(self.tempdir, handbrake_log)
-        self.fq_temp_file = str(temp_file)
-
-        output_file = Path(self.outdir, outfile)
-        self.fq_output_file = str(output_file)
+        self.fq_temp_file = temp_file
 
         self.archive_complete = False
         self.archive_dir = None
-        if archive_root and media_root:
+        if self.archive_root and self.media_root:
             self.archive_dir = self._construct_archive_dst(
-                archive_root, media_root, output_file)
+                self.archive_root, self.media_root, output_file)
             # save job JSON to archive path
             self.job_json_name = Path(self.archive_dir, self.job_json_name)
 
         self._sanity_check_dirs()
         self._sanity_check_params()
         self.command: EncodeCommand = self._build_command()
-        self.encoding_complete: bool = False
-        self._total_start: datetime.datetime = None
-        self._total_stop: datetime.datetime = None
-        self._encoding_start: datetime.datetime = None
-        self._encoding_stop: datetime.datetime = None
-        self._archive_start: datetime.datetime = None
-        self._archive_stop: datetime.datetime = None
-        self._encoded: Encoded = None
 
     @property
     def report(self):
@@ -120,13 +120,14 @@ class SingleEncoder(object):
     def do_archive(self):
         if self.needs_archive():
             self._archive_start = datetime.datetime.now()
-            self.logger.info(f"Archiving {os.path.basename(self.input_file)}")
+            self.logger.info(
+                f"Archiving {os.path.basename(self.fq_input_file)}")
             self.logger.debug(f"...to {self.archive_dir}/")
             if not self.dry_run:
                 self.archive_dir.mkdir(parents=True, exist_ok=True)
                 # TODO: archive crop file and subtitle file if they're available
-                shutil.copy2(self.input_file, self.archive_dir)
-                shutil.copy2(self.handbrake_log, self.archive_dir)
+                shutil.copy2(self.fq_input_file, self.archive_dir)
+                shutil.copy2(self.encoder_log, self.archive_dir)
                 json.dump(self.job_config, open(
                     self.job_json_name, "w"), indent=2)
             self._archive_stop = datetime.datetime.now()
@@ -146,11 +147,13 @@ class SingleEncoder(object):
     def wait(self):
         status = self._wait()
         if self.needs_encode():
+            tmpfile = self.fq_output_file
             err_text = None
             if status == 0:
                 self.logger.info(
                     f"Moving encoded file to {self.fq_output_file}")
-                shutil.move(self.fq_temp_file, self.fq_output_file)
+                shutil.copy2(tmpfile, self.fq_output_file)
+                tmpfile.unlink()
                 self._total_stop = datetime.datetime.now()
             else:
                 self._total_stop = datetime.datetime.now()
@@ -179,7 +182,7 @@ class SingleEncoder(object):
     def _wait(self):
         if self.needs_encode():
             self.logger.info(
-                f"Waiting for '{os.path.basename(self.input_file)}' to complete.")
+                f"Waiting for '{os.path.basename(self.fq_input_file)}' to complete.")
             self.process.wait()
             self._encoding_stop = datetime.datetime.now()
             status = self.process.returncode
@@ -193,9 +196,45 @@ class SingleEncoder(object):
         err_out = err_out.decode()
         return err_out
 
+    def _construct_outfile_basename(self, title, quality, movie, m4v):
+        outfile_base = title
+        if movie and quality:
+            outfile_base = f"{outfile_base} - {quality}"
+        ext = "m4v" if m4v else "mkv"
+        outfile_base = f"{outfile_base}.{ext}"
+        return outfile_base
+
+    def _construct_archive_dst(self, archive_root, media_root, output_file):
+        # convert everything to a Path object in case they aren't already
+        archive_root = Path(archive_root)
+        media_root = Path(media_root)
+        output_file = Path(output_file)
+
+        # Find the subpath of the media root there the encoded file will be written
+        # E.g., /Volumes/media/videos/Movies/Star Wars (1977).m4v -> Movies/Star Wars (1977).m4v
+        relative_output = output_file.relative_to(media_root)
+
+        # Get the stem, e.g., Movies/Star Wars (1977)
+        relative_output = relative_output.with_suffix('')
+
+        # Mirror this path in the archive root
+        # E.g., /Volumes/Media Archive/videos/Movies/Star Wars (1977)
+        archive_path = Path(archive_root, relative_output)
+
+        return archive_path
+
+    def _get_crop_option(self):
+        """build option list for cropping video."""
+        if self.crop_params:
+            crop_opt = ["--crop", self.crop_params]
+        else:
+            crop_opt = ["--crop", self.CROP_AUTO_ARG]
+
+        return crop_opt
+
     def _sanity_check_dirs(self):
-        if not os.path.exists(self.input_file):
-            msg = f"Input file not found: {self.input_file}"
+        if not os.path.exists(self.fq_input_file):
+            msg = f"Input file not found: {self.fq_input_file}"
             self.logger.error(msg)
             raise MalformedJobException(msg)
 
@@ -221,30 +260,11 @@ class SingleEncoder(object):
     def _sanity_check_params(self):
         if not self.output_title:
             raise MalformedJobException(
-                f"No output title for {self.input_file}")
+                f"No output title for {self.fq_input_file}")
 
     def _build_command(self):
-        crop_option = self._get_crop_option()
-        subtitle_option = self._get_sub_option()
-        decomb_option = self._get_decomb_option()
-        command = EncodeCommand()
-        if crop_option:
-            for opt in crop_option:
-                command.append(opt)
-        if subtitle_option:
-            for opt in subtitle_option:
-                command.append(opt)
-        if decomb_option:
-            for opt in decomb_option:
-                command.append(opt)
-        if self.m4v:
-            command.append("--m4v")
-        if self.chapter_spec:
-            command.extend(["--chapters", self.chapter_spec])
-        command.append(self.input_file)
-        command.append("--output")
-        command.append(self.fq_temp_file)
-        return command
+        raise NotImplementedError(
+            "_build_command() must be implemented in a subclass")
 
     def _get_sub_lang(self, srt_file_name):
         lang = ""
@@ -289,14 +309,42 @@ class SingleEncoder(object):
 
         return sub_opt
 
-    def _get_crop_option(self):
-        """build option list for cropping video."""
-        if self.crop_params:
-            crop_opt = ["--crop", self.crop_params]
-        else:
-            crop_opt = ["--crop", "detect"]
+    def _get_decomb_option(self):
+        raise NotImplementedError(
+            f"Decombing not implemented for {self.__class__.__name__}")
 
-        return crop_opt
+
+class SingleEncoderSoftware(SingleEncoderBase):
+
+    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
+        super().__init__(tempdir, job_config, logger=logger,
+                         dry_run=dry_run, skip_encode=skip_encode)
+
+    def _build_command(self):
+        crop_option = self._get_crop_option()
+        subtitle_option = self._get_sub_option()
+        decomb_option = self._get_decomb_option()
+        command = EncodeCommand()
+        if crop_option:
+            for opt in crop_option:
+                command.append(opt)
+        if subtitle_option:
+            for opt in subtitle_option:
+                command.append(opt)
+        if decomb_option:
+            for opt in decomb_option:
+                command.append(opt)
+        if self.m4v:
+            command.append("--m4v")
+        if self.chapter_spec:
+            command.extend(["--chapters", self.chapter_spec])
+        command.append(self.fq_input_file)
+        command.append("--output")
+        command.append(self.fq_temp_file)
+
+        # Ensure any Path or other objects are strings
+        command = [str(arg) for arg in command]
+        return command
 
     def _get_decomb_option(self):
         """
@@ -318,30 +366,3 @@ class SingleEncoder(object):
             # TODO: maybe enable this combo by default?
             decomb_option = ["-H", "comb-detect", "--filter", "decomb"]
         return decomb_option
-
-    def _construct_archive_dst(self, archive_root, media_root, output_file):
-        # convert everything to a Path object in case they aren't already
-        archive_root = Path(archive_root)
-        media_root = Path(media_root)
-        output_file = Path(output_file)
-
-        # Find the subpath of the media root there the encoded file will be written
-        # E.g., /Volumes/media/videos/Movies/Star Wars (1977).m4v -> Movies/Star Wars (1977).m4v
-        relative_output = output_file.relative_to(media_root)
-
-        # Get the stem, e.g., Movies/Star Wars (1977)
-        relative_output = relative_output.with_suffix('')
-
-        # Mirror this path in the archive root
-        # E.g., /Volumes/Media Archive/videos/Movies/Star Wars (1977)
-        archive_path = Path(archive_root, relative_output)
-
-        return archive_path
-
-    def _construct_outfile_basename(self, title, quality, movie, m4v):
-        outfile_base = title
-        if movie and quality:
-            outfile_base = f"{outfile_base} - {quality}"
-        ext = "m4v" if m4v else "mkv"
-        outfile_base = f"{outfile_base}.{ext}"
-        return outfile_base
