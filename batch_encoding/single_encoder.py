@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Dict
 
-from .command import EncodeCommand
+from .command import TranscodeVideoCommand
 from .encode_report import Encoded, EncodeReport
 
 from.exceptions import MalformedJobException
@@ -95,7 +95,7 @@ class SingleEncoderBase:
 
         self._sanity_check_dirs()
         self._sanity_check_params()
-        self.command: EncodeCommand = self._build_command()
+        self.command: TranscodeVideoCommand = self._build_command()
 
     @property
     def report(self):
@@ -325,7 +325,7 @@ class SingleEncoderSoftware(SingleEncoderBase):
         crop_option = self._get_crop_option()
         subtitle_option = self._get_sub_option()
         decomb_option = self._get_decomb_option()
-        command = EncodeCommand()
+        command = TranscodeVideoCommand()
         if crop_option:
             for opt in crop_option:
                 command.append(opt)
