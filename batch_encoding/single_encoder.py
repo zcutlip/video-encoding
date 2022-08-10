@@ -148,7 +148,7 @@ class SingleEncoderBase:
     def wait(self):
         status = self._wait()
         if self.needs_encode():
-            tmpfile = self.fq_output_file
+            tmpfile = self.fq_temp_file
             err_text = None
             if status == 0:
                 self.logger.info(
