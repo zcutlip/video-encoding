@@ -76,8 +76,9 @@ class SingleEncoderBase:
         outfile = self._construct_outfile_basename(
             self.output_title, self.quality, self.movie, self.m4v)
         self.job_json_name = f"{outfile}-config.json"
-        output_file = Path(self.outdir, outfile)
-        self.fq_output_file = output_file
+        fq_output_file = Path(self.outdir, outfile)
+        self.fq_output_file = fq_output_file
+        self.output_file_base = outfile
 
         encoder_log = f"{outfile}.log"
         self.encoder_log = Path(self.tempdir, encoder_log)
@@ -89,7 +90,7 @@ class SingleEncoderBase:
         self.archive_dir = None
         if self.archive_root and self.media_root:
             self.archive_dir = self._construct_archive_dst(
-                self.archive_root, self.media_root, output_file)
+                self.archive_root, self.media_root, fq_output_file)
             # save job JSON to archive path
             self.job_json_name = Path(self.archive_dir, self.job_json_name)
 
