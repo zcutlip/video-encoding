@@ -16,7 +16,7 @@ from.exceptions import MalformedJobException
 
 class SingleEncoderBase:
     # Argument to '--crop' to trigger autodetection
-    CROP_AUTO_ARG = "detect"
+    CROP_AUTO_ARG = None
     SUBTITLE_AUTO_ARG = "scan"
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
@@ -291,7 +291,7 @@ class SingleEncoderBase:
         elif self.burn_subtitle_num:
             sub_opt = ["--burn-subtitle", str(self.burn_subtitle_num)]
         else:
-            sub_opt = ["--burn-subtitle", "scan"]
+            sub_opt = ["--burn-subtitle", self.SUBTITLE_AUTO_ARG]
 
         if self.add_subtitle:
             sub_opt.extend(["--add-subtitle", self.add_subtitle])
@@ -315,6 +315,7 @@ class SingleEncoderBase:
 
 
 class SingleEncoderSoftware(SingleEncoderBase):
+    CROP_AUTO_ARG = "detect"
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
         super().__init__(tempdir, job_config, logger=logger,
