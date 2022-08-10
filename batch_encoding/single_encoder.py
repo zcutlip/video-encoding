@@ -28,6 +28,7 @@ class SingleEncoderBase:
     CROP_AUTO_ARG = None
     SUBTITLE_AUTO_ARG = "scan"
     ENCODER_VERBOSE_ARG = None
+    REDIRECT_STDERR = False
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if not logger:
@@ -149,11 +150,14 @@ class SingleEncoderBase:
         self.logger.info("Running:")
         self.logger.info(f"{self.command}")
         if self.needs_encode():
-            self.outlog_file = open(self.outlog, "wb", 0)
+            outlog_fh = open(self.outlog, "wb", 0)
+            stderr = subprocess.PIPE
+            if self.REDIRECT_STDERR:
+                stderr = subprocess.STDOUT
             start = datetime.datetime.now()
             self._total_start = self._encoding_start = start
             self.process = subprocess.Popen(
-                self.command, stdout=self.outlog_file, stderr=subprocess.PIPE, bufsize=0
+                self.command, stdout=outlog_fh, stderr=stderr, bufsize=0
             )
 
     def wait(self):
@@ -398,6 +402,7 @@ class SingleEncoderHardware(SingleEncoderBase):
     CROP_AUTO_ARG = "auto"
     SUBTITLE_AUTO_ARG = "auto"
     ENCODER_VERBOSE_ARG = "debug"
+    REDIRECT_STDERR = True
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if sys.platform not in self.SUPPORTED_PLATFORMS:
