@@ -12,7 +12,7 @@ from .config.batch_config import ConfigFromParsedArgs
 from .config.encoding_config import EncodingConfig, EncodingJobNoInputException
 from .encode_report import EncodeReport
 from .exceptions import MalformedJobException
-from .single_encoder import SingleEncoderSoftware
+from .single_encoder import SingleEncoderBase, SingleEncoderHardware
 
 
 class BatchEncoderJobsException(Exception):
@@ -32,7 +32,7 @@ class BatchEncoder(object):
         self.skip_encode = skip_encode
         self.workdir = config["workdir"]
         self.outdir = config["outdir"]
-        self.encoders: Tuple[SingleEncoderSoftware, str] = []
+        self.encoders: Tuple[SingleEncoderBase, str] = []
         self._archive_queue = []
         self.malformed_jobs = []
         self.tempdir = tempfile.mkdtemp()
@@ -144,7 +144,7 @@ class BatchEncoder(object):
                 job_dict["chapters"] = loaded_job["chapters"]
 
             try:
-                encoder = SingleEncoderSoftware(
+                encoder = SingleEncoderHardware(
                     self.tempdir,
                     job_dict,
                     logger=self.logger,
@@ -201,7 +201,7 @@ class BatchEncoder(object):
 
     def _do_archive_queue(self):
         self.logger.info("Checking archive queue")
-        encoder: SingleEncoderSoftware = None
+        encoder: SingleEncoderBase = None
         while self._archive_queue:
             encoder = self._archive_queue.pop()
             if encoder.needs_archive():
