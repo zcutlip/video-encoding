@@ -105,6 +105,13 @@ def parse_args():
         default=None
     )
 
+    parser.add_argument(
+        "--debug",
+        help="Enable debug/verbose output for batchencode as well as the underlying encoder",
+        action="store_true",
+        default=None
+    )
+
     parsed = parser.parse_args()
     return parsed
 

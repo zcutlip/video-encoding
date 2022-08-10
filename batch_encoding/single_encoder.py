@@ -27,12 +27,14 @@ class SingleEncoderBase:
     # Argument to '--crop' to trigger autodetection
     CROP_AUTO_ARG = None
     SUBTITLE_AUTO_ARG = "scan"
+    ENCODER_VERBOSE_ARG = None
 
-    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
+    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if not logger:
             logger = logging.getLogger("single-encoder")
         self.logger = logger
-
+        self.logger.debug("Debug logging enabled")
+        self.debug = debug
         self.encoding_complete: bool = False
         self._total_start: datetime.datetime = None
         self._total_stop: datetime.datetime = None
@@ -233,6 +235,12 @@ class SingleEncoderBase:
 
         return archive_path
 
+    def _get_debug_option(self):
+        debug_arg = ""
+        if self.debug:
+            debug_arg = f"--{self.ENCODER_VERBOSE_ARG}"
+        return debug_arg
+
     def _get_crop_option(self):
         """build option list for cropping video."""
         if self.crop_params:
@@ -326,16 +334,18 @@ class SingleEncoderBase:
 
 class SingleEncoderSoftware(SingleEncoderBase):
     CROP_AUTO_ARG = "detect"
+    ENCODER_VERBOSE_ARG = "verbose"
 
-    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
+    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         super().__init__(tempdir, job_config, logger=logger,
-                         dry_run=dry_run, skip_encode=skip_encode)
+                         dry_run=dry_run, skip_encode=skip_encode, debug=debug)
 
     def _build_command(self):
         crop_option = self._get_crop_option()
         subtitle_option = self._get_sub_option()
         decomb_option = self._get_decomb_option()
         command = TranscodeVideoCommand()
+        debug_option = self._get_debug_option()
         if crop_option:
             for opt in crop_option:
                 command.append(opt)
@@ -349,6 +359,10 @@ class SingleEncoderSoftware(SingleEncoderBase):
             command.append("--m4v")
         if self.chapter_spec:
             command.extend(["--chapters", self.chapter_spec])
+
+        if debug_option:
+            command.append(debug_option)
+
         command.append(self.fq_input_file)
         command.append("--output")
         command.append(self.fq_temp_file)
@@ -383,12 +397,13 @@ class SingleEncoderHardware(SingleEncoderBase):
     SUPPORTED_PLATFORMS = ["darwin"]
     CROP_AUTO_ARG = "auto"
     SUBTITLE_AUTO_ARG = "auto"
+    ENCODER_VERBOSE_ARG = "debug"
 
-    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False):
+    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if sys.platform not in self.SUPPORTED_PLATFORMS:
             raise OperatingSystemNotSupported(
                 f"OS/platform not supported {sys.platform}")
-        super().__init__(tempdir, job_config, logger, dry_run, skip_encode)
+        super().__init__(tempdir, job_config, logger, dry_run, skip_encode, debug=debug)
         if self.decomb:
             raise EncodingOptionNotSupportedException(
                 f"--decomb option not supported for {self.__class__.__name__}")
@@ -414,6 +429,8 @@ class SingleEncoderHardware(SingleEncoderBase):
     def _build_command(self):
         crop_option = self._get_crop_option()
         subtitle_option = self._get_sub_option()
+        debug_option = self._get_debug_option()
+
         command = OtherTranscodeCommand()
         if crop_option:
             for opt in crop_option:
@@ -421,6 +438,8 @@ class SingleEncoderHardware(SingleEncoderBase):
         if subtitle_option:
             for opt in subtitle_option:
                 command.append(opt)
+        if debug_option:
+            command.append(debug_option)
         command.extend(["--hevc", "--vt", "--10-bit"])
         self.input_file_symlink = self._make_input_symlink()
         command.append(str(self.input_file_symlink))

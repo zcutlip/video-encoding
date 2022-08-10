@@ -24,10 +24,11 @@ class BatchEncoderJobsException(Exception):
 class BatchEncoder(object):
     JOB_QUEUE_FILE = "jobs.json"
 
-    def __init__(self, config: Dict, logger=None, dry_run=False, skip_encode=False):
+    def __init__(self, config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if not logger:
             logger = logging.getLogger("batch-encoder")
             self.logger = logger
+        self.debug = debug
         self.dry_run = dry_run
         self.skip_encode = skip_encode
         self.workdir = config["workdir"]
@@ -149,7 +150,8 @@ class BatchEncoder(object):
                     job_dict,
                     logger=self.logger,
                     dry_run=self.dry_run,
-                    skip_encode=self.skip_encode)
+                    skip_encode=self.skip_encode,
+                    debug=self.debug)
                 self.encoders.append((encoder, input_file))
             except MalformedJobException as e:
                 self.malformed_jobs.append(e)
@@ -209,13 +211,22 @@ class BatchEncoder(object):
 
 
 def do_encoding():
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger()
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("batchencode")
     try:
         config = ConfigFromParsedArgs()
     except EncodingJobNoInputException as e:
         logger.fatal(f"{e}")
         return -1
+    debug = config["debug"]
+    if debug:
+        # set DEBUG on the root logger so that future loggers inherit it
+        logging.getLogger().setLevel(logging.DEBUG)
+
+        # set DEBUG on our current logger
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug logging enabled")
+
     sc = None
     if config.encoding_config["no_sleep"]:
         sc = SelfCaffeinate()
@@ -230,7 +241,8 @@ def do_encoding():
         encoding_config.save()
     else:
         try:
-            encoder = BatchEncoder(encoding_config, skip_encode=skip)
+            encoder = BatchEncoder(
+                encoding_config, skip_encode=skip, debug=debug)
         except BatchEncoderJobsException as e:
             logger.error("Errors creating batch encoder")
             for err in e.errors:
