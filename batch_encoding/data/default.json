@@ -20,5 +20,6 @@
     "report_email": null,
     "report_path": null,
     "skip_encode": false,
-    "debug": false
+    "debug": false,
+    "fallback_okay": false
 }

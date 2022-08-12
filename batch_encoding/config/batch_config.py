@@ -112,6 +112,13 @@ def parse_args():
         default=None
     )
 
+    parser.add_argument(
+        "--fallback-okay",
+        help="Okay to fall back to HandBrake software encoder if options incompatible with the hardware encoder are provided",
+        action="store_true",
+        default=None
+    )
+
     parsed = parser.parse_args()
     return parsed
 
