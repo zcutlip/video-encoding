@@ -31,11 +31,12 @@ class BatchEncoderJobsException(Exception):
 class BatchEncoder(object):
     JOB_QUEUE_FILE = "jobs.json"
 
-    def __init__(self, config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
+    def __init__(self, config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False, fallback=False):
         if not logger:
             logger = logging.getLogger("batch-encoder")
             self.logger = logger
         self.debug = debug
+        self.encoder_fallback = fallback
         self.dry_run = dry_run
         self.skip_encode = skip_encode
         self.workdir = config["workdir"]
@@ -166,9 +167,12 @@ class BatchEncoder(object):
                     self.encoders.append((encoder, input_file))
 
                 except EncodingOptionNotSupportedException as e:
-                    self.logger.error(f"{e}")
-                    self.logger.error("Trying next encoder class")
-                    continue
+                    if self.encoder_fallback:
+                        self.logger.error(f"{e}")
+                        self.logger.error("Trying next encoder class")
+                        continue
+                    msg = f"Can't encode {input_file}\nException: {e}"
+                    raise EncodingOptionNotSupportedException(msg)
 
                 except MalformedJobException as e:
                     self.malformed_jobs.append(e)
@@ -238,6 +242,7 @@ def do_encoding():
         logger.fatal(f"{e}")
         return -1
     debug = config["debug"]
+    fallback = config["fallback_okay"]
     if debug:
         # set DEBUG on the root logger so that future loggers inherit it
         logging.getLogger().setLevel(logging.DEBUG)
@@ -261,7 +266,7 @@ def do_encoding():
     else:
         try:
             encoder = BatchEncoder(
-                encoding_config, skip_encode=skip, debug=debug)
+                encoding_config, skip_encode=skip, debug=debug, fallback=fallback)
         except BatchEncoderJobsException as e:
             logger.error("Errors creating batch encoder")
             for err in e.errors:
