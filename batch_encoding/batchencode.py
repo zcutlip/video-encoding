@@ -290,6 +290,9 @@ def main():
     except KeyboardInterrupt:
         print("KeyboardInterrupt: quitting")
         return 1
+    except Exception as e:
+        logging.fatal(f"Terminating due to exception: {e}")
+        return 1
 
 
 if __name__ == "__main__":
