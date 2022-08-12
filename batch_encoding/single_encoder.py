@@ -12,11 +12,7 @@ from typing import Dict
 from .command import OtherTranscodeCommand, TranscodeVideoCommand
 from .encode_report import Encoded, EncodeReport
 
-from.exceptions import MalformedJobException
-
-
-class EncodingOptionNotSupportedException(Exception):
-    pass
+from.exceptions import MalformedJobException, EncodingOptionNotSupportedException
 
 
 class OperatingSystemNotSupported(Exception):
