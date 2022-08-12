@@ -11,8 +11,15 @@ from selfcaffeinate import SelfCaffeinate
 from .config.batch_config import ConfigFromParsedArgs
 from .config.encoding_config import EncodingConfig, EncodingJobNoInputException
 from .encode_report import EncodeReport
-from .exceptions import MalformedJobException
-from .single_encoder import SingleEncoderBase, SingleEncoderHardware
+from .exceptions import (
+    EncodingOptionNotSupportedException,
+    MalformedJobException
+)
+from .single_encoder import (
+    SingleEncoderBase,
+    SingleEncoderHardware,
+    SingleEncoderSoftware
+)
 
 
 class BatchEncoderJobsException(Exception):
@@ -144,17 +151,29 @@ class BatchEncoder(object):
             if "chapters" in loaded_job:
                 job_dict["chapters"] = loaded_job["chapters"]
 
-            try:
-                encoder = SingleEncoderHardware(
-                    self.tempdir,
-                    job_dict,
-                    logger=self.logger,
-                    dry_run=self.dry_run,
-                    skip_encode=self.skip_encode,
-                    debug=self.debug)
-                self.encoders.append((encoder, input_file))
-            except MalformedJobException as e:
-                self.malformed_jobs.append(e)
+            encoder_cls: SingleEncoderBase
+            for encoder_cls in [SingleEncoderHardware, SingleEncoderSoftware]:
+                self.logger.debug(
+                    f"Trying enocder class {encoder_cls.__name__}")
+                try:
+                    encoder = encoder_cls(
+                        self.tempdir,
+                        job_dict,
+                        logger=self.logger,
+                        dry_run=self.dry_run,
+                        skip_encode=self.skip_encode,
+                        debug=self.debug)
+                    self.encoders.append((encoder, input_file))
+
+                except EncodingOptionNotSupportedException as e:
+                    self.logger.error(f"{e}")
+                    self.logger.error("Trying next encoder class")
+                    continue
+
+                except MalformedJobException as e:
+                    self.malformed_jobs.append(e)
+
+                break
 
     def _read_job_list(self):
         try:
