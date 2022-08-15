@@ -418,6 +418,8 @@ class SingleEncoderHardware(SingleEncoderBase):
         input_path = Path(self.tempdir, "input")
         input_path.mkdir(exist_ok=True)
         fq_linkname = Path(input_path, self.output_file_base)
+        self.logger.debug(
+            f"Making symlink from {self.fq_input_file} to {fq_linkname}")
         try:
             os.symlink(self.fq_input_file, fq_linkname)
         except FileExistsError:
