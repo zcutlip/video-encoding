@@ -396,23 +396,23 @@ class SingleEncoderHardware(SingleEncoderBase):
     SUBTITLE_AUTO_ARG = "auto"
     ENCODER_VERBOSE_ARG = "debug"
     REDIRECT_STDERR = True
+    UNSUPPORTED_OPTIONS = ["decomb", "m4v", "chapters"]
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if sys.platform not in self.SUPPORTED_PLATFORMS:
             raise OperatingSystemNotSupported(
                 f"OS/platform not supported {sys.platform}")
+        bad_options = []
+        for option in self.UNSUPPORTED_OPTIONS:
+            if job_config[option]:
+                bad_opt = f"--{option}"
+                bad_options.append(bad_opt)
+
+        if bad_options:
+            msg = f"Unsupported options for {self.__class__.__name__}: {bad_options}"
+            raise EncodingOptionNotSupportedException(msg)
+
         super().__init__(tempdir, job_config, logger, dry_run, skip_encode, debug=debug)
-        if self.decomb:
-            raise EncodingOptionNotSupportedException(
-                f"--decomb option not supported for {self.__class__.__name__}")
-
-        if self.m4v:
-            raise EncodingOptionNotSupportedException(
-                f"--m4v option not supported for {self.__class__.__name__}")
-
-        if self.chapter_spec:
-            raise EncodingOptionNotSupportedException(
-                f"--chapters option not supported for {self.__class__.__name__}")
 
     def _make_input_symlink(self):
         input_path = Path(self.tempdir, "input")
