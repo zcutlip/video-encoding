@@ -363,12 +363,9 @@ class SingleEncoderSoftware(SingleEncoderBase):
         if debug_option:
             command.append(debug_option)
 
-        command.append(self.fq_input_file)
+        command.append(str(self.fq_input_file))
         command.append("--output")
-        command.append(self.fq_temp_file)
-
-        # Ensure any Path or other objects are strings
-        command = [str(arg) for arg in command]
+        command.append(str(self.fq_temp_file))
         return command
 
     def _get_decomb_option(self):
