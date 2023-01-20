@@ -11,11 +11,10 @@ from selfcaffeinate import SelfCaffeinate
 from .config.batch_config import ConfigFromParsedArgs
 from .config.encoding_config import EncodingConfig, EncodingJobNoInputException
 from .encode_report import EncodeReport
-from .encoder.encoder_base import (
-    SingleEncoderBase,
-    SingleEncoderHardware,
-    SingleEncoderSoftware
-)
+from .encoder.encoder_base import SingleEncoderBase
+from .encoder.hardware import SingleEncoderHardware
+from .encoder.passthrough import SingleEncoderPassthrough
+from .encoder.software import SingleEncoderSoftware
 from .exceptions import (
     EncodingOptionNotSupportedException,
     MalformedJobException
@@ -125,11 +124,11 @@ class BatchEncoder(object):
         loaded_jobs = self._noncompleted_jobs()
         job_config_template = copy.copy(config_dict)
         job_config_template.pop("jobs")
+        loaded_job: Dict
         for input_file, loaded_job in loaded_jobs.items():
             job_dict = copy.copy(job_config_template)
             job_dict["input_file"] = input_file
             job_dict["output_title"] = loaded_job["output_title"]
-
             # override batch parameters with job-specific parameters
             if "decomb" in loaded_job:
                 job_dict["decomb"] = loaded_job["decomb"]
@@ -152,8 +151,23 @@ class BatchEncoder(object):
             if "chapters" in loaded_job:
                 job_dict["chapters"] = loaded_job["chapters"]
 
+            # we don't need passthrough to remain in the dictionary because
+            # it isn't used by the encoder constructor
+            # instead, we just set the flag here so we can instantiate the proper class below
+            passthrough = job_dict.pop("passthrough")
+            if "passthrough" in loaded_job:
+                # if this specific job should (or should NOT) be a passthrough, let's get
+                # that value
+                passthrough = loaded_job.pop("passthrough")
+
             encoder_cls: SingleEncoderBase
-            for encoder_cls in [SingleEncoderHardware, SingleEncoderSoftware]:
+            class_list = [SingleEncoderHardware, SingleEncoderSoftware]
+            if passthrough:
+                # make the passthrough encoder first in line
+                # and we can optionally fall back to the other encoders
+                # if we need to and were told to
+                class_list.insert(0, SingleEncoderPassthrough)
+            for encoder_cls in class_list:
                 self.logger.debug(
                     f"Trying enocder class {encoder_cls.__name__}")
                 try:
