@@ -11,7 +11,7 @@ from selfcaffeinate import SelfCaffeinate
 from .config.batch_config import ConfigFromParsedArgs
 from .config.encoding_config import EncodingConfig, EncodingJobNoInputException
 from .encode_report import EncodeReport
-from .encoder.single_encoder import (
+from .encoder.encoder_base import (
     SingleEncoderBase,
     SingleEncoderHardware,
     SingleEncoderSoftware
