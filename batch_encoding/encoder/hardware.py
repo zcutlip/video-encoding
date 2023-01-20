@@ -68,4 +68,5 @@ class SingleEncoderHardware(SingleEncoderBase):
         return command
 
     def run(self):
-        self.logger.info("Passthrough encoder, nothing to run")
+        os.chdir(self.tempdir)
+        return super().run()
