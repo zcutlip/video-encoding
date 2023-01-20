@@ -119,6 +119,13 @@ def parse_args():
         default=None
     )
 
+    parser.add_argument(
+        "--passthrough",
+        help="Use the passthrough encoder to simply copy the input file to the destination with appropriate naming but no transcoding",
+        action="store_true",
+        default=None
+    )
+
     parsed = parser.parse_args()
     return parsed
 
