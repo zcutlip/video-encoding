@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "batchencode",
+            "type": "python",
+            "request": "launch",
+            "module": "batch_encoding.batchencode",
+            "args": [
+                "/Volumes/Encoding/encoding/encoding-jobs.json",
+                "--fallback-okay"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "make job config",
+            "type": "python",
+            "request": "launch",
+            "module": "batch_encoding.batchencode",
+            "args": [
+                "/Volumes/Encoding/encoding/encoding-jobs.json",
+                "--video-list", "/Users/zach/videos.txt",
+                "--outdir", "/Volumes/media/tinopai/Movies/",
+                "--workdir", "/Volumes/Encoding/encoding/tinopai",
+                "--archive-root", "/Volumes/Media Archive/tinopai/",
+                "--media-root", "/Volumes/media/tinopai",
+                "--no-sleep"
+            ]
+        }
+    ]
+}
