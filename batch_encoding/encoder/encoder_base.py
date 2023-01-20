@@ -5,18 +5,12 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from typing import Dict
 
-from ..command import OtherTranscodeCommand, TranscodeVideoCommand
+from ..command import TranscodeVideoCommand
 from ..encode_report import Encoded, EncodeReport
-
-from..exceptions import MalformedJobException, EncodingOptionNotSupportedException
-
-
-class OperatingSystemNotSupported(Exception):
-    pass
+from ..exceptions import MalformedJobException
 
 
 class SingleEncoderBase:
@@ -142,6 +136,13 @@ class SingleEncoderBase:
             self._archive_stop = datetime.datetime.now()
             self.archive_complete = True
 
+    def copy_to_dest(self):
+        tmpfile = self.fq_temp_file
+        self.logger.info(
+            f"Moving encoded file to {self.fq_output_file}")
+        shutil.copy2(tmpfile, self.fq_output_file)
+        tmpfile.unlink()
+
     def run(self):
         self.logger.info("Running:")
         self.logger.info(f"{self.command}")
@@ -159,17 +160,13 @@ class SingleEncoderBase:
     def wait(self):
         status = self._wait()
         if self.needs_encode():
-            tmpfile = self.fq_temp_file
             err_text = None
             if status == 0:
-                self.logger.info(
-                    f"Moving encoded file to {self.fq_output_file}")
-                shutil.copy2(tmpfile, self.fq_output_file)
-                tmpfile.unlink()
-                self._total_stop = datetime.datetime.now()
+                self.copy_to_dest()
             else:
-                self._total_stop = datetime.datetime.now()
                 err_text = self._err_out()
+
+            self._total_stop = datetime.datetime.now()
 
             delta = self._total_stop - self._total_start
             total_sec = delta.seconds
@@ -330,121 +327,3 @@ class SingleEncoderBase:
     def _get_decomb_option(self):
         raise NotImplementedError(
             f"Decombing not implemented for {self.__class__.__name__}")
-
-
-class SingleEncoderSoftware(SingleEncoderBase):
-    CROP_AUTO_ARG = "detect"
-    ENCODER_VERBOSE_ARG = "verbose"
-
-    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
-        super().__init__(tempdir, job_config, logger=logger,
-                         dry_run=dry_run, skip_encode=skip_encode, debug=debug)
-
-    def _build_command(self):
-        crop_option = self._get_crop_option()
-        subtitle_option = self._get_sub_option()
-        decomb_option = self._get_decomb_option()
-        command = TranscodeVideoCommand()
-        debug_option = self._get_debug_option()
-        if crop_option:
-            for opt in crop_option:
-                command.append(opt)
-        if subtitle_option:
-            for opt in subtitle_option:
-                command.append(opt)
-        if decomb_option:
-            for opt in decomb_option:
-                command.append(opt)
-        if self.m4v:
-            command.append("--m4v")
-        if self.chapter_spec:
-            command.extend(["--chapters", self.chapter_spec])
-
-        if debug_option:
-            command.append(debug_option)
-
-        command.append(str(self.fq_input_file))
-        command.append("--output")
-        command.append(str(self.fq_temp_file))
-        return command
-
-    def _get_decomb_option(self):
-        """
-        Do we need to set decombing?
-        """
-        decomb_option = None
-        if self.decomb:
-            # From HandBrakeCLI --help:
-            #    --comb-detect[=string]  Detect interlace artifacts in frames.
-            #       If not accompanied by the decomb or deinterlace
-            #       filters, this filter only logs the interlaced
-            #       frame count to the activity log.
-            #       If accompanied by the decomb or deinterlace
-            #       filters, it causes these filters to selectively
-            #       deinterlace only those frames where interlacing
-            #       is detected.
-            #
-            # -H option to transcode-video specifies option to be passed to handbrake
-            # TODO: maybe enable this combo by default?
-            decomb_option = ["-H", "comb-detect", "--filter", "decomb"]
-        return decomb_option
-
-
-class SingleEncoderHardware(SingleEncoderBase):
-    SUPPORTED_PLATFORMS = ["darwin"]
-    CROP_AUTO_ARG = "auto"
-    SUBTITLE_AUTO_ARG = "auto"
-    ENCODER_VERBOSE_ARG = "debug"
-    REDIRECT_STDERR = True
-    UNSUPPORTED_OPTIONS = ["decomb", "m4v", "chapters"]
-
-    def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
-        if sys.platform not in self.SUPPORTED_PLATFORMS:
-            raise OperatingSystemNotSupported(
-                f"OS/platform not supported {sys.platform}")
-        bad_options = []
-        for option in self.UNSUPPORTED_OPTIONS:
-            if job_config[option]:
-                bad_opt = f"--{option}"
-                bad_options.append(bad_opt)
-
-        if bad_options:
-            msg = f"Unsupported options for {self.__class__.__name__}: {bad_options}"
-            raise EncodingOptionNotSupportedException(msg)
-
-        super().__init__(tempdir, job_config, logger, dry_run, skip_encode, debug=debug)
-
-    def _make_input_symlink(self):
-        input_path = Path(self.tempdir, "input")
-        input_path.mkdir(exist_ok=True)
-        fq_linkname = Path(input_path, self.output_file_base)
-        self.logger.debug(
-            f"Making symlink from {self.fq_input_file} to {fq_linkname}")
-        try:
-            os.symlink(self.fq_input_file, fq_linkname)
-        except FileExistsError:
-            pass
-        return fq_linkname
-
-    def _build_command(self):
-        crop_option = self._get_crop_option()
-        subtitle_option = self._get_sub_option()
-        debug_option = self._get_debug_option()
-
-        command = OtherTranscodeCommand()
-        if crop_option:
-            for opt in crop_option:
-                command.append(opt)
-        if subtitle_option:
-            for opt in subtitle_option:
-                command.append(opt)
-        if debug_option:
-            command.append(debug_option)
-        command.extend(["--hevc", "--vt", "--10-bit"])
-        self.input_file_symlink = self._make_input_symlink()
-        command.append(str(self.input_file_symlink))
-        return command
-
-    def run(self):
-        os.chdir(self.tempdir)
-        return super().run()
