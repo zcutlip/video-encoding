@@ -11,14 +11,14 @@ from selfcaffeinate import SelfCaffeinate
 from .config.batch_config import ConfigFromParsedArgs
 from .config.encoding_config import EncodingConfig, EncodingJobNoInputException
 from .encode_report import EncodeReport
-from .exceptions import (
-    EncodingOptionNotSupportedException,
-    MalformedJobException
-)
-from .single_encoder import (
+from .encoder.single_encoder import (
     SingleEncoderBase,
     SingleEncoderHardware,
     SingleEncoderSoftware
+)
+from .exceptions import (
+    EncodingOptionNotSupportedException,
+    MalformedJobException
 )
 
 
