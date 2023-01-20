@@ -120,6 +120,9 @@ class SingleEncoderBase:
         )
         return needs_encode
 
+    def needs_copy(self):
+        return self.needs_encode()
+
     def do_archive(self):
         if self.needs_archive():
             self._archive_start = datetime.datetime.now()
@@ -159,7 +162,7 @@ class SingleEncoderBase:
 
     def wait(self):
         status = self._wait()
-        if self.needs_encode():
+        if self.needs_copy():
             err_text = None
             if status == 0:
                 self.copy_to_dest()
@@ -170,8 +173,10 @@ class SingleEncoderBase:
 
             delta = self._total_stop - self._total_start
             total_sec = delta.seconds
-            delta = self._encoding_stop - self._encoding_start
-            encoding_sec = delta.seconds
+            encoding_sec = 0
+            if self.needs_encode():
+                delta = self._encoding_stop - self._encoding_start
+                encoding_sec = delta.seconds
             encoded = Encoded(self.input_file_basename,
                               self.fq_output_file,
                               (status == 0),
