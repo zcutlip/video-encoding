@@ -147,15 +147,16 @@ class SingleEncoderBase:
         tmpfile.unlink()
 
     def run(self):
-        self.logger.info("Running:")
-        self.logger.info(f"{self.command}")
+        start = datetime.datetime.now()
+        self._total_start = start
         if self.needs_encode():
+            self.logger.info("Running:")
+            self.logger.info(f"{self.command}")
             outlog_fh = open(self.outlog, "wb", 0)
             stderr = subprocess.PIPE
             if self.REDIRECT_STDERR:
                 stderr = subprocess.STDOUT
-            start = datetime.datetime.now()
-            self._total_start = self._encoding_start = start
+            self._encoding_start = start
             self.process = subprocess.Popen(
                 self.command, stdout=outlog_fh, stderr=stderr, bufsize=0
             )
