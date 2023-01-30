@@ -1,5 +1,6 @@
 import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import Dict
 
 from ..exceptions import EncodingOptionNotSupportedException
@@ -33,12 +34,28 @@ class SingleEncoderPassthrough(SingleEncoderBase):
         return []
 
     def run(self):
+        # get a path to the logfile we're going to write
+        # in the same directory next to the input file
+        input_log_base = f"{self.input_file_basename}.log"
+        fq_input_log_file = Path(self.workdir, input_log_base)
+
         date_str = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+
+        log_lines = ["** Passthrough Encoder **",
+                     f"Date: {date_str}",
+                     f"Source: {self.fq_input_file}",
+                     f"Destination: {self.fq_output_file}",
+                     ""]
+
         with open(self.encoder_log, "w") as logfile:
-            print("** Passthrough Encoder **", file=logfile)
-            print(f"Date: {date_str}", file=logfile)
-            print(f"Source: {self.fq_input_file}", file=logfile)
-            print(f"Destination: {self.fq_output_file}", file=logfile)
+            logfile.write("\n".join(log_lines))
+
+        # this is mostly to make it easy to see on the filesystem
+        # which input files have been encoded, but it's also occasionally
+        # convenient to have the work log right there
+        with open(fq_input_log_file, "w") as logfile:
+            logfile.write("\n".join(log_lines))
+
         super().run()
 
     def needs_copy(self):
