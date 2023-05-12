@@ -25,7 +25,7 @@ then
     quit 1
 fi
 
-version="v$(python ./setup.py --version)" || quit "Unable to detect package version" $?
+version="v$(python3 ./setup.py --version)" || quit "Unable to detect package version" $?
 
 existing_version=$(git tag -l "$version")
 
