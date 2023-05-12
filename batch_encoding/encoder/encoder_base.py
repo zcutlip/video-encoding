@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from ..command import TranscodeVideoCommand
 from ..encode_report import Encoded, EncodeReport
@@ -54,6 +54,10 @@ class SingleEncoderBase:
         self.add_subtitle = job_config["add_subtitle"]
         self.m4v = job_config["m4v"]
         self.chapter_spec = job_config["chapters"]
+
+        # if additional resources need to be copied to the destination,
+        # populate this list with [(fq_src_1, fq_dest_1), (fq_src_2, fq_dest_2), ...]
+        self.resources_to_copy: List[Tuple[str, str]] = []
 
         # Put movies in a title-based folder
         # to support storing mutliple versions and other assets
@@ -134,6 +138,8 @@ class SingleEncoderBase:
                 # TODO: archive crop file and subtitle file if they're available
                 shutil.copy2(self.fq_input_file, self.archive_dir)
                 shutil.copy2(self.encoder_log, self.archive_dir)
+                for resource, _ in self.resources_to_copy:
+                    shutil.copy2(resource, self.archive_dir)
                 json.dump(self.job_config, open(
                     self.job_json_name, "w"), indent=2)
             self._archive_stop = datetime.datetime.now()
@@ -144,6 +150,10 @@ class SingleEncoderBase:
         self.logger.info(
             f"Moving encoded file to {self.fq_output_file}")
         shutil.copy2(tmpfile, self.fq_output_file)
+        for src, dst in self.resources_to_copy:
+            self.logger.info(f"Copying resource '{src}' to '{dst}'")
+            shutil.copy2(src, dst)
+
         tmpfile.unlink()
 
     def run(self):
