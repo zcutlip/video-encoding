@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 from ..command import TranscodeVideoCommand
@@ -60,3 +61,30 @@ class SingleEncoderSoftware(SingleEncoderBase):
             # TODO: maybe enable this combo by default?
             decomb_option = ["-H", "comb-detect", "--filter", "decomb"]
         return decomb_option
+
+    def _get_sub_option(self):
+        """
+        Build option list for burning subtitles.
+        Eventually this will be configurable at run-time and may return None.
+        """
+        if self.disable_auto_burn:
+            sub_opt = ["--disable-auto-burn"]
+        elif self.burn_subtitle_num:
+            sub_opt = ["--burn-subtitle", str(self.burn_subtitle_num)]
+        else:
+            sub_opt = ["--burn-subtitle", self.SUBTITLE_AUTO_ARG]
+
+        if self.add_subtitle:
+            sub_opt.extend(["--add-subtitle", self.add_subtitle])
+
+        input_base = os.path.splitext(self.input_file_basename)[0]
+
+        # no matches is an empty list
+        srt_files = self._find_srt_files(self.subtitles_dir, input_base)
+
+        for srt_file in srt_files:
+            lang = self._get_sub_lang(srt_file)
+            sub_opt += ["--add-srt", srt_file]
+            sub_opt += ["--bind-srt-language", lang]
+
+        return sub_opt
