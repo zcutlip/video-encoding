@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 from ..command import TranscodeVideoCommand
 from ..encode_report import Encoded, EncodeReport
@@ -302,33 +302,18 @@ class SingleEncoderBase:
         # "eng"
         return lang
 
+    def _find_srt_files(self, sub_dir: str, srt_base: str) -> List[str]:
+        srt_glob = f"{sub_dir}/{srt_base}.*.srt"
+        matches = glob.glob(srt_glob)
+        return matches
+
     def _get_sub_option(self):
         """
         Build option list for burning subtitles.
         Eventually this will be configurable at run-time and may return None.
         """
-        if self.disable_auto_burn:
-            sub_opt = ["--disable-auto-burn"]
-        elif self.burn_subtitle_num:
-            sub_opt = ["--burn-subtitle", str(self.burn_subtitle_num)]
-        else:
-            sub_opt = ["--burn-subtitle", self.SUBTITLE_AUTO_ARG]
-
-        if self.add_subtitle:
-            sub_opt.extend(["--add-subtitle", self.add_subtitle])
-
-        subtitle_glob = "%s/%s.*.srt" % (
-            self.subtitles_dir,
-            os.path.splitext(self.input_file_basename)[0],
-        )
-
-        matching_srt_files = glob.glob(subtitle_glob)
-        for srt_file in matching_srt_files:
-            lang = self._get_sub_lang(srt_file)
-            sub_opt += ["--add-srt", srt_file]
-            sub_opt += ["--bind-srt-language", lang]
-
-        return sub_opt
+        raise NotImplementedError(
+            "Must override _get_sub_option() for specific transcoding engine")
 
     def _get_decomb_option(self):
         raise NotImplementedError(
