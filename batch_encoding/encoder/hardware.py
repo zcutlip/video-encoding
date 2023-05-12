@@ -67,6 +67,27 @@ class SingleEncoderHardware(SingleEncoderBase):
         command.append(str(self.input_file_symlink))
         return command
 
+    def _populate_external_sub_resources(self):
+        # locate any matching external srt files that need to be copied into place
+        # The way this works is:
+        # locate all:
+        # {workdir}/subtitles/The_Matrix_title_00.*.srt
+        # compute destination:
+        # {outdir}/The Matrix (1999) - 1080p.eng.srt
+        # then add the (fq_src, fq_dest) pair to self.sources_to_copy
+
+        input_base = os.path.splitext(self.input_file_basename)[0]
+        output_base = os.path.splitext(self.output_file_base)[0]
+        # no matches is an empty list
+        srt_files = self._find_srt_files(self.subtitles_dir, input_base)
+        for srt_infile in srt_files:
+            lang = self._get_sub_lang(srt_infile)
+            srt_dest_base = f"{output_base}.{lang}.srt"
+            fq_dest = Path(self.outdir, srt_dest_base)
+            srt_dest = str(fq_dest)
+            src_dest_pair = (srt_infile, srt_dest)
+            self.resources_to_copy.append(src_dest_pair)
+
     def _get_sub_option(self):
         """
         Build option list for burning subtitles.
