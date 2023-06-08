@@ -126,6 +126,13 @@ def parse_args():
         default=None
     )
 
+    parser.add_argument(
+        "--no-10-bit",
+        help="If using the h.265/HEVC encoder, disable 10-bit color depth. Can help with unnatural color saturation",
+        action="store_true",
+        default=None
+    )
+
     parsed = parser.parse_args()
     return parsed
 

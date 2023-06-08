@@ -54,6 +54,7 @@ class SingleEncoderBase:
         self.add_subtitle = job_config["add_subtitle"]
         self.m4v = job_config["m4v"]
         self.chapter_spec = job_config["chapters"]
+        self.no_10_bit = job_config["no_10_bit"]
 
         # if additional resources need to be copied to the destination,
         # populate this list with [(fq_src_1, fq_dest_1), (fq_src_2, fq_dest_2), ...]
@@ -103,6 +104,7 @@ class SingleEncoderBase:
         self._sanity_check_dirs()
         self._sanity_check_params()
         self.command: TranscodeVideoCommand = self._build_command()
+        self.job_config["command"] = str(self.command)
 
     @property
     def report(self):

@@ -62,7 +62,10 @@ class SingleEncoderHardware(SingleEncoderBase):
                 command.append(opt)
         if debug_option:
             command.append(debug_option)
-        command.extend(["--hevc", "--vt", "--10-bit"])
+        command.extend(["--hevc", "--vt"])
+        if not self.no_10_bit:
+            command.append("--10-bit")
+
         self.input_file_symlink = self._make_input_symlink()
         command.append(str(self.input_file_symlink))
         return command

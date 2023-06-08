@@ -150,6 +150,8 @@ class BatchEncoder(object):
                 job_dict["movie"] = loaded_job["movie"]
             if "chapters" in loaded_job:
                 job_dict["chapters"] = loaded_job["chapters"]
+            if "no_10_bit" in loaded_job:
+                job_dict["no_10_bit"] = loaded_job["no_10_bit"]
 
             # we don't need passthrough to remain in the dictionary because
             # it isn't used by the encoder constructor

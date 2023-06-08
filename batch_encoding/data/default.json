@@ -15,6 +15,7 @@
         "m4v": false,
         "chapters": null,
         "passthrough": false,
+        "no_10_bit": false,
         "jobs": []
     },
     "pprint_config": true,
