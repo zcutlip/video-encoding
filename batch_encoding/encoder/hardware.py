@@ -116,6 +116,8 @@ class SingleEncoderHardware(SingleEncoderBase):
         # so we need to copy them into place if they exist
         self._populate_external_sub_resources()
 
+        return sub_opt
+
     def run(self):
         os.chdir(self.tempdir)
         return super().run()
