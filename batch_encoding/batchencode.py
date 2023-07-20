@@ -171,7 +171,7 @@ class BatchEncoder(object):
                 class_list.insert(0, SingleEncoderPassthrough)
             for encoder_cls in class_list:
                 self.logger.debug(
-                    f"Trying enocder class {encoder_cls.__name__}")
+                    f"Trying encoder class {encoder_cls.__name__}")
                 try:
                     encoder = encoder_cls(
                         self.tempdir,
