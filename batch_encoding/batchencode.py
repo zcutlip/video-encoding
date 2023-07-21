@@ -129,6 +129,7 @@ class BatchEncoder(object):
         job_config_template = copy.copy(config_dict)
         job_config_template.pop("jobs")
         loaded_job: Dict
+
         for input_file, loaded_job in loaded_jobs.items():
             job_dict = copy.copy(job_config_template)
             job_dict["input_file"] = input_file
@@ -218,6 +219,8 @@ class BatchEncoder(object):
         self._write_job_list(joblist)
 
     def _create_job_list(self, jobs):
+        seen_output_titles = []
+        duplicate_output_titles = set()
         loaded_jobs = self._read_job_list()
         if not loaded_jobs:
             loaded_jobs = {}
@@ -229,6 +232,19 @@ class BatchEncoder(object):
             job_dict["complete"] = False
 
             loaded_jobs[input_file] = job_dict
+        for _, job_dict in loaded_jobs.items():
+            output_title = job_dict["output_title"]
+            if output_title in seen_output_titles:
+                duplicate_output_titles.add(output_title)
+            else:
+                seen_output_titles.append(output_title)
+        if duplicate_output_titles:
+            dups = list(duplicate_output_titles)
+            msg = f"Duplicate output titles found: {dups}"
+            self.logger.fatal(msg)
+            # raise the exception before we write out jobs.json
+            raise DuplicateOutputTitlesException(msg)
+
         self._write_job_list(loaded_jobs)
 
     def _delete_job_list(self):
