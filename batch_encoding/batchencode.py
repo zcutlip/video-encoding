@@ -27,6 +27,10 @@ class BatchEncoderJobsException(Exception):
         self.errors = errors
 
 
+class DuplicateOutputTitlesException(Exception):
+    pass
+
+
 class BatchEncoder(object):
     JOB_QUEUE_FILE = "jobs.json"
 
