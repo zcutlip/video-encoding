@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This is a wrapper for Don Melton's [Video Transcoding](https://github.com/donmelton/video_transcoding) project.
+This is a wrapper for Lisa Melton's [Video Transcoding](https://github.com/lisamelton/video_transcoding) project.
 
-Setting up and using Don's tools is beyond the scope of this README, but the basic goal is to convert rips from Blu-Ray or DVD to a more portable format that can be easily used in Plex or on mobile devices.
+Setting up and using Lisa's tools is beyond the scope of this README, but the basic goal is to convert rips from Blu-Ray or DVD to a more portable format that can be easily used in Plex or on mobile devices.
 
 The goals of this project are:
 
@@ -175,4 +175,3 @@ This would create an archive directory structure that looked like:
 ```
 
 Each input file is archived in a directory structure that mirrors the encoded destination.
-
