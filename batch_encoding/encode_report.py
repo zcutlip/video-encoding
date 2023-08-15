@@ -5,6 +5,8 @@ from email import message
 from pathlib import Path
 from typing import List
 
+from . import VideoEncodingAbout
+
 
 class EncodedValueError(ValueError):
     pass
@@ -99,6 +101,9 @@ class EncodeReport:
         if self.date_str is None:
             self.date_str = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
         date_str = self.date_str
+
+        version_text = f"Version: {VideoEncodingAbout()}"
+        report_lines.extend(self._new_header(version_text))
 
         date_text = f"Date: {date_str}"
         report_lines.extend(self._new_header(date_text))
