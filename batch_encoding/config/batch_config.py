@@ -133,6 +133,13 @@ def parse_args():
         default=None
     )
 
+    parser.add_argument(
+        "--resize-1080p",
+        help="If input file is 4K and/or 2160p, resize to 1080p (or equivalent for aspect ratio)",
+        action="store_true",
+        default=None
+    )
+
     parsed = parser.parse_args()
     return parsed
 
