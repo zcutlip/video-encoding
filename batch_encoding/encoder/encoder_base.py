@@ -11,6 +11,7 @@ from typing import Dict, List, Tuple
 from ..command import TranscodeVideoCommand
 from ..encode_report import Encoded, EncodeReport
 from ..exceptions import MalformedJobException
+from ..video_stream_info import VideoStreamInfo
 
 
 class SingleEncoderBase:
@@ -73,6 +74,9 @@ class SingleEncoderBase:
 
         self.input_file_basename = os.path.basename(self.input_file)
         self.fq_input_file = Path(self.workdir, self.input_file_basename)
+
+        self.video_stream_info = VideoStreamInfo(self.fq_input_file)
+
         self.subtitles_dir = Path(self.workdir, "subtitles")
         self._report = EncodeReport()
         outlog = "%s-output.log" % self.input_file_basename
@@ -273,7 +277,8 @@ class SingleEncoderBase:
 
         if os.path.exists(self.outdir):
             if not os.path.isdir(self.outdir):
-                msg = f"Output path exists but is not a directory: {self.outdir}"
+                msg = f"Output path exists but is not a directory: {
+                    self.outdir}"
                 self.logger.error(msg)
                 raise Exception(msg)
         else:
