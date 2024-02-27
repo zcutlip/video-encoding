@@ -3,7 +3,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
-from ..exceptions import EncodingOptionNotSupportedException
 from .encoder_base import SingleEncoderBase
 
 
@@ -12,21 +11,18 @@ class SingleEncoderPassthrough(SingleEncoderBase):
     SUBTITLE_AUTO_ARG = "auto"
     ENCODER_VERBOSE_ARG = "debug"
     REDIRECT_STDERR = True
-    UNSUPPORTED_OPTIONS = ["decomb", "m4v", "chapters",
-                           "disable_auto_burn", "add_subtitle", "crop_params", "chapters"]
+    # override base class's list
+    # this will be checked in the superconstructor
+    UNSUPPORTED_OPTIONS = ["decomb",
+                           "m4v",
+                           "chapters",
+                           "disable_auto_burn",
+                           "add_subtitle",
+                           "crop_params",
+                           "chapters",
+                           "resize_1080p"]
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
-
-        bad_options = []
-        for option in self.UNSUPPORTED_OPTIONS:
-            if job_config[option]:
-                bad_opt = f"--{option}"
-                bad_options.append(bad_opt)
-
-        if bad_options:
-            msg = f"Unsupported options for {self.__class__.__name__}: {bad_options}"
-            raise EncodingOptionNotSupportedException(msg)
-
         super().__init__(tempdir, job_config, logger, dry_run, skip_encode, debug=debug)
         self.encoding_complete = True
 

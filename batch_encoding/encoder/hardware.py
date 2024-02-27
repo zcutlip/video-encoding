@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict
 
 from ..command import OtherTranscodeCommand
-from ..exceptions import EncodingOptionNotSupportedException
+from ..exceptions import IncompatibleInputException
 from .encoder_base import SingleEncoderBase
 
 
@@ -18,21 +18,14 @@ class SingleEncoderHardware(SingleEncoderBase):
     SUBTITLE_AUTO_ARG = "auto"
     ENCODER_VERBOSE_ARG = "debug"
     REDIRECT_STDERR = True
-    UNSUPPORTED_OPTIONS = ["decomb", "m4v", "chapters"]
+    # override base class's list
+    # this will be checked in the superconstructor
+    UNSUPPORTED_OPTIONS = ["decomb", "m4v", "chapters",]
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if sys.platform not in self.SUPPORTED_PLATFORMS:
             raise OperatingSystemNotSupported(
                 f"OS/platform not supported {sys.platform}")
-        bad_options = []
-        for option in self.UNSUPPORTED_OPTIONS:
-            if job_config[option]:
-                bad_opt = f"--{option}"
-                bad_options.append(bad_opt)
-
-        if bad_options:
-            msg = f"Unsupported options for {self.__class__.__name__}: {bad_options}"
-            raise EncodingOptionNotSupportedException(msg)
 
         super().__init__(tempdir, job_config, logger, dry_run, skip_encode, debug=debug)
 
@@ -65,6 +58,14 @@ class SingleEncoderHardware(SingleEncoderBase):
         command.extend(["--hevc", "--vt"])
         if not self.no_10_bit:
             command.append("--10-bit")
+
+        if self.resize_1080p:
+            if self.video_stream_info.at_least_4k():
+                command.append("--1080p")
+            else:
+                msg = f"Input file [{
+                    self.input_file_basename}] must be 4k or better to resize to 1080p"
+                raise IncompatibleInputException(msg)
 
         self.input_file_symlink = self._make_input_symlink()
         command.append(str(self.input_file_symlink))

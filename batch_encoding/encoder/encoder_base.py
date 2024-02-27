@@ -10,7 +10,10 @@ from typing import Dict, List, Tuple
 
 from ..command import TranscodeVideoCommand
 from ..encode_report import Encoded, EncodeReport
-from ..exceptions import MalformedJobException
+from ..exceptions import (
+    EncodingOptionNotSupportedException,
+    MalformedJobException
+)
 from ..video_stream_info import VideoStreamInfo
 
 
@@ -20,6 +23,7 @@ class SingleEncoderBase:
     SUBTITLE_AUTO_ARG = "scan"
     ENCODER_VERBOSE_ARG = None
     REDIRECT_STDERR = False
+    UNSUPPORTED_OPTIONS = []
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         if not logger:
@@ -35,6 +39,19 @@ class SingleEncoderBase:
         self._archive_start: datetime.datetime = None
         self._archive_stop: datetime.datetime = None
         self._encoded: Encoded = None
+
+        option: str
+        bad_options = []
+        for option in self.UNSUPPORTED_OPTIONS:
+            if job_config[option]:
+                bad_opt = option.replace("_", "-")
+                bad_opt = f"--{bad_opt}"
+                bad_options.append(bad_opt)
+
+        if bad_options:
+            msg = f"Unsupported options for {
+                self.__class__.__name__}: {bad_options}"
+            raise EncodingOptionNotSupportedException(msg)
 
         self.dry_run = dry_run
         self.skip_encode = skip_encode
@@ -56,6 +73,7 @@ class SingleEncoderBase:
         self.m4v = job_config["m4v"]
         self.chapter_spec = job_config["chapters"]
         self.no_10_bit = job_config["no_10_bit"]
+        self.resize_1080p = job_config["resize_1080p"]
 
         # if additional resources need to be copied to the destination,
         # populate this list with [(fq_src_1, fq_dest_1), (fq_src_2, fq_dest_2), ...]
@@ -277,7 +295,8 @@ class SingleEncoderBase:
 
         if os.path.exists(self.outdir):
             if not os.path.isdir(self.outdir):
-                msg = f"Output path exists but is not a directory: {self.outdir}"
+                msg = f"Output path exists but is not a directory: {
+                    self.outdir}"
                 self.logger.error(msg)
                 raise Exception(msg)
         else:

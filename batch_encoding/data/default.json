@@ -16,6 +16,7 @@
         "chapters": null,
         "passthrough": false,
         "no_10_bit": false,
+        "resize_1080p": false,
         "jobs": []
     },
     "pprint_config": true,

@@ -95,7 +95,8 @@ def parse_args():
 
     parser.add_argument(
         "--write-user-defaults",
-        help=f"Write default config to {str(ConfigFromParsedArgs.DEFAULT_CONFIG_PATH)}",
+        help=f"Write default config to {
+            str(ConfigFromParsedArgs.DEFAULT_CONFIG_PATH)}",
         action="store_true",
         default=None
     )
@@ -129,6 +130,13 @@ def parse_args():
     parser.add_argument(
         "--no-10-bit",
         help="If using the h.265/HEVC encoder, disable 10-bit color depth. Can help with unnatural color saturation",
+        action="store_true",
+        default=None
+    )
+
+    parser.add_argument(
+        "--resize-1080p",
+        help="If input file is 4K and/or 2160p, resize to 1080p (or equivalent for aspect ratio)",
         action="store_true",
         default=None
     )
