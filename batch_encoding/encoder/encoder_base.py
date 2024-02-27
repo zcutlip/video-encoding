@@ -277,8 +277,7 @@ class SingleEncoderBase:
 
         if os.path.exists(self.outdir):
             if not os.path.isdir(self.outdir):
-                msg = f"Output path exists but is not a directory: {
-                    self.outdir}"
+                msg = f"Output path exists but is not a directory: {self.outdir}"
                 self.logger.error(msg)
                 raise Exception(msg)
         else:
