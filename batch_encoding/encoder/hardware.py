@@ -66,6 +66,9 @@ class SingleEncoderHardware(SingleEncoderBase):
                 msg = f"Input file [{self.input_file_basename}] must be 4k or better to resize to 1080p"
                 raise IncompatibleInputException(msg)
 
+        if self.additional_options:
+            for option in self.additional_options:
+                command.append(option)
         self.input_file_symlink = self._make_input_symlink()
         command.append(str(self.input_file_symlink))
         return command
