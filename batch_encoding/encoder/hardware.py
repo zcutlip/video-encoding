@@ -55,7 +55,11 @@ class SingleEncoderHardware(SingleEncoderBase):
                 command.append(opt)
         if debug_option:
             command.append(debug_option)
-        command.extend(["--hevc", "--vt"])
+
+        # only use hevc/h.265 for 4K, else use h.264, which is default
+        if self.video_stream_info.at_least_4k():
+            command.extend(["--hevc"])
+        command.extend(["--vt"])
         if not self.no_10_bit:
             command.append("--10-bit")
 
