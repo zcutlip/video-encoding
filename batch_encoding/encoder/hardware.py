@@ -26,7 +26,7 @@ class SingleEncoderHardware(SingleEncoderBase):
         if sys.platform not in self.SUPPORTED_PLATFORMS:
             raise OperatingSystemNotSupported(
                 f"OS/platform not supported {sys.platform}")
-
+        self._hevc = False
         super().__init__(tempdir, job_config, logger, dry_run, skip_encode, debug=debug)
 
     def _make_input_symlink(self):
@@ -58,6 +58,7 @@ class SingleEncoderHardware(SingleEncoderBase):
 
         # only use hevc/h.265 for 4K, else use h.264, which is default
         if self.video_stream_info.at_least_4k():
+            self._hevc = True
             command.extend(["--hevc"])
         command.extend(["--vt"])
         if not self.no_10_bit:
