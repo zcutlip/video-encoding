@@ -61,8 +61,11 @@ class SingleEncoderHardware(SingleEncoderBase):
             self._hevc = True
             command.extend(["--hevc"])
         command.extend(["--vt"])
-        if not self.no_10_bit:
+        # only enable 10-bit if we're using hevc/h.265 (and we weren't told to disable it)
+        if self._hevc and not self.no_10_bit:
             command.append("--10-bit")
+        else:
+            command.append("--no-10-bit")
 
         if self.resize_1080p:
             if self.video_stream_info.at_least_4k():
