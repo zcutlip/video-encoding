@@ -21,7 +21,7 @@ setup(name='batch-video-encoding',
           'console_scripts': [
               'batchencode=batch_encoding.batchencode:main'
           ], },
-      python_requires='>=3.7',
+      python_requires='>=3.11',
       install_requires=[
           'selfcaffeinate',
           'scruffington'
