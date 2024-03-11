@@ -73,6 +73,7 @@ class SingleEncoderBase:
         self.chapter_spec = job_config["chapters"]
         self.no_10_bit = job_config["no_10_bit"]
         self.resize_1080p = job_config["resize_1080p"]
+        self.force_software = job_config["force_software"]
         self.additional_options = job_config["additional_options"]
 
         # if additional resources need to be copied to the destination,

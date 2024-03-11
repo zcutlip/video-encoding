@@ -139,6 +139,12 @@ def parse_args():
         action="store_true",
         default=None
     )
+    parser.add_argument(
+        "--force-software",
+        help="Force software encoding (x264/x265)",
+        action="store_true",
+        default=None
+    )
 
     parsed = parser.parse_args()
     return parsed

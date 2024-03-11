@@ -17,6 +17,7 @@
         "passthrough": false,
         "no_10_bit": false,
         "resize_1080p": false,
+        "force_software": false,
         "additional_options": [],
         "jobs": []
     },

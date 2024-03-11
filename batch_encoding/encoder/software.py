@@ -10,7 +10,7 @@ class SingleEncoderSoftware(SingleEncoderBase):
     ENCODER_VERBOSE_ARG = "verbose"
     # override base class's list
     # this will be checked in the superconstructor
-    UNSUPPORTED_OPTIONS = ["resize_1080p"]
+    UNSUPPORTED_OPTIONS = ["resize_1080p", "force_software"]
 
     def __init__(self, tempdir, job_config: Dict, logger=None, dry_run=False, skip_encode=False, debug=False):
         super().__init__(tempdir, job_config, logger=logger,

@@ -59,8 +59,22 @@ class SingleEncoderHardware(SingleEncoderBase):
         # only use hevc/h.265 for 4K, else use h.264, which is default
         if self.video_stream_info.at_least_4k():
             self._hevc = True
-            command.extend(["--hevc"])
-        command.extend(["--vt"])
+        else:
+            self._hevc = False
+
+        if self.force_software and self._hevc:
+            # software-only encoding using hevc
+            command.extend(["--x265"])
+        elif self.force_software and not self._hevc:
+            # software-only encoding using h.264
+            command.extend(["--x264"])
+        elif not self.force_software:
+            # hardware encoding using macOS video-toolboox
+            command.extend(["--vt"])
+            if self._hevc:
+                # use hevc version of platform video encoder
+                command.extend(["--hevc"])
+
         # only enable 10-bit if we're using hevc/h.265 (and we weren't told to disable it)
         if self._hevc and not self.no_10_bit:
             command.append("--10-bit")
