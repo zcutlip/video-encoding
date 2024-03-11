@@ -2,5 +2,6 @@ flake8
 autopep8
 pycodestyle
 ipython
+setuptools
 -r requirements.txt
 -e .
