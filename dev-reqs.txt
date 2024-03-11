@@ -1,7 +1,8 @@
-flake8
 autopep8
-pycodestyle
+build
+flake8
 ipython
+pycodestyle
 setuptools
 -r requirements.txt
 -e .
