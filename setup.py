@@ -25,5 +25,5 @@ setup(name='batch-video-encoding',
       install_requires=[
           'selfcaffeinate'
       ],
-      package_data={'sw_planet_tweets': ['config/*']},
+      package_data={},
       )
