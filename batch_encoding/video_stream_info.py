@@ -4,6 +4,8 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
+from .command import FFProbeCommand
+
 
 class VideoStreamInfoException(Exception):
     pass
@@ -12,7 +14,6 @@ class VideoStreamInfoException(Exception):
 class VideoStreamInfo(dict):
     HEIGHT_4k = 2160
     WIDTH_4K = 3840
-    FFPROBE_COMMAND = "ffprobe"
 
     def __init__(self, video_path: Union[str, Path], logger=None):
         super().__init__()
@@ -37,11 +38,12 @@ class VideoStreamInfo(dict):
         return stream
 
     def _run_ffprobe(self, video_path: Path) -> str:
-        ffprobe_argv = [self.FFPROBE_COMMAND,
-                        "-print_format", "json",
-                        "-show_format",
-                        "-v", "quiet",
-                        "-show_streams", str(video_path)]
+        ffprobe_argv = FFProbeCommand()
+        ffprobe_argv.extend(["-print_format", "json",
+                             "-show_format",
+                             "-v", "quiet",
+                             "-show_streams", str(video_path)])
+        self.logger.info(f"{ffprobe_argv}")
         _ran = subprocess.run(
             ffprobe_argv, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdout = _ran.stdout
