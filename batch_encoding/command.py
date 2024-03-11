@@ -11,6 +11,13 @@ class BaseCommand(List[str]):
         return command_str
 
 
+class FFProbeCommand(BaseCommand):
+    COMMAND = "ffprobe"
+
+    def __init__(self):
+        super().__init__([self.COMMAND])
+
+
 class TranscodeVideoCommand(BaseCommand):
     # Don Melton's Video Transcoding project
     # https://github.com/donmelton/video_transcoding
