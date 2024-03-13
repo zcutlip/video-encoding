@@ -25,5 +25,5 @@ setup(name='batch-video-encoding',
       install_requires=[
           'selfcaffeinate'
       ],
-      package_data={},
+      package_data={'batch_encoding': ['data/**']},
       )
