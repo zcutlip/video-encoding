@@ -26,4 +26,5 @@ setup(name='batch-video-encoding',
           'selfcaffeinate'
       ],
       package_data={'batch_encoding': ['data/**']},
+      scripts=["user-scripts/remove_dovi.sh"]
       )
