@@ -91,8 +91,15 @@ class SingleEncoderBase:
         if self.movie:
             self.outdir = Path(self.outdir, self.output_title)
 
+        self.input_file = Path(self.input_file)
+        self.input_file_basename = self.input_file.name
         self.input_file_basename = os.path.basename(self.input_file)
-        self.fq_input_file = Path(self.workdir, self.input_file_basename)
+        if self.input_file.is_absolute():
+            # allow input file name to be an absolute path
+            self.fq_input_file = self.input_file
+        else:
+            # if it's not absolute, assume it's a subdir of the working directory
+            self.fq_input_file = Path(self.workdir, self.input_file_basename)
 
         self.video_stream_info = VideoStreamInfo(self.fq_input_file)
 
