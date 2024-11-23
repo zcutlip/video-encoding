@@ -74,6 +74,7 @@ class SingleEncoderBase:
         self.no_10_bit = job_config["no_10_bit"]
         self.resize_1080p = job_config["resize_1080p"]
         self.force_software = job_config["force_software"]
+        self.skip_archive = job_config["skip_archive"]
         self.additional_options = job_config["additional_options"]
 
         # if additional resources need to be copied to the destination,
@@ -125,7 +126,8 @@ class SingleEncoderBase:
 
         self.archive_complete = False
         self.archive_dir = None
-        if self.archive_root and self.media_root:
+        self.logger.debug(f"skip_archive: {self.skip_archive}")
+        if self.archive_root and self.media_root and not self.skip_archive:
             self.archive_dir = self._construct_archive_dst(
                 self.archive_root, self.media_root, fq_output_file)
             # save job JSON to archive path
@@ -141,6 +143,8 @@ class SingleEncoderBase:
         return self._report
 
     def needs_archive(self):
+        # archive_dir is None if archive_root was None or
+        # media_root was None, or skip_archive was True
         needs_archive = (
             self.archive_dir is not None and
             self.encoding_complete and
