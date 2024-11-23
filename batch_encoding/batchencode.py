@@ -161,6 +161,8 @@ class BatchEncoder(object):
                 job_dict["resize_1080p"] = loaded_job["resize_1080p"]
             if "force_software" in loaded_job:
                 job_dict["force_software"] = loaded_job["force_software"]
+            if "skip_archive" in loaded_job:
+                job_dict["skip_archive"] = loaded_job["skip_archive"]
             if "additional_options" in loaded_job:
                 job_dict["additional_options"] = loaded_job["additional_options"]
 
