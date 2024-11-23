@@ -151,7 +151,8 @@ def parse_args():
 
 
 class ConfigFromParsedArgs(BatchEncoderDefaultConfig):
-    DEFAULT_CONFIG_PATH = Path("~/.config/batchencoder/batchencoder.json")
+    DEFAULT_CONFIG_PATH = Path(
+        "~/.config/batchencoder/batchencoder.json").expanduser()
     ENCODING_CONFIG_KEY = "encoding_config"
 
     def __init__(self):
