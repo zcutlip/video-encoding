@@ -57,7 +57,7 @@ class SingleEncoderHardware(SingleEncoderBase):
             command.append(debug_option)
 
         # only use hevc/h.265 for 4K, else use h.264, which is default
-        if self.video_stream_info.at_least_4k():
+        if self.video_stream_info.at_least_4k() and not self.resize_1080p:
             self._hevc = True
         else:
             self._hevc = False
