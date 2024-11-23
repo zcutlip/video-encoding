@@ -29,9 +29,17 @@ def parse_args():
         help="Root path to encoded files. Used to calculate directory structure in the archive root."
     )
 
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+
+    group.add_argument(
         "--archive-root",
         help="Root path to archive input files to. Directory structure will be mirrored from media root."
+    )
+    group.add_argument(
+        "--skip-archive",
+        action="store_true",
+        help="Skip archiving after encoding",
+        default=None
     )
 
     parser.add_argument(
